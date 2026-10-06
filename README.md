@@ -1,4 +1,55 @@
-# Build Your Own Box — Shopify Horizon customization
+# Build Your Own Box — Shopify Horizon customizations
+
+This repo contains two independent BYOB demos on the Horizon theme:
+
+| Demo | URL | Files |
+| --- | --- | --- |
+| **BYOB 2** — four-step chocolate box builder | `/pages/build-your-own-box-2` | `yb2-*` |
+| **BYOB 1** — single-page box builder | `/products/build-your-own-box` | `byob-*` |
+
+## BYOB 2 — four-step chocolate box builder
+
+Choose a box (6/12/16/24) → choose flavors → choose a sleeve → review → add to cart.
+
+**Data model.** The box product has two options, *Box size* × *Sleeve* (16 variants), and each
+variant's price is the full box price. The builder adds that variant, so the price shown is always
+the price Shopify charges — no front-end price manipulation. Flavors are products selected in a
+`product_list` setting (type = category; "Vegan" / "Best Seller" tags add filters; `yb2-shell:`,
+`yb2-top:`, `yb2-accent:` tags drive the original SVG illustrations).
+
+**Cart line.** One `/cart/add.js` call with properties `Total pieces`, `Flavor 1…n` (e.g.
+"Dark Sea Salt Caramel × 3") and a hidden `_yb2_config` JSON with product IDs for fulfilment.
+Horizon's `CartLinesUpdateEvent` refreshes the cart drawer and count.
+
+**Code layout.**
+
+| File | Responsibility |
+| --- | --- |
+| `assets/yb2-model.js` | Pure logic: variant lookup, pricing, step validation, restore sanitising, cart payload |
+| `assets/yb2-store.js` | Observable state with guarded localStorage persistence |
+| `assets/yb2-view.js` | DOM rendering for progress, counter, cards, tray, stats, review |
+| `assets/yb2-cart.js` | AJAX Cart API + Horizon cart events |
+| `assets/yb2-builder.js` | `<yb2-builder-component>` controller (Horizon `Component`) |
+| `sections/yb2-builder.liquid` | Section, design tokens, schema ("size" and "sleeve" blocks) |
+| `snippets/yb2-*.liquid` | One snippet per step, card, summary, art, icons and JSON data |
+| `templates/page.yb2.json` | Page template with sizes, sleeves and flavor list |
+
+Shared files touched (additive only): four `@theme/yb2-*` import-map entries in
+`snippets/scripts.liquid`, and a `yb2` namespace in the `en.default` locale files.
+
+**UX details.** Desktop step bar and mobile numbered markers (completed steps are clickable);
+sticky summary sidebar on desktop and sticky bottom bar with expandable box preview on mobile;
+"8 / 16 selected" counter with remaining count; capacity guard with a friendly message; filters and
+search that never touch selections; tray slots you can click to remove a piece; state restored after a
+refresh with a "Start over" option; focus moves to each step heading; one polite live region.
+
+**Limitations.** Flavor inventory isn't decremented (flavors are properties, not lines) — a
+production build would use a Cart Transform bundle function. Flavor products are also purchasable on
+their own. Only English strings are included.
+
+---
+
+## BYOB 1 — single-page box builder
 
 A working **Build Your Own Box (BYOB)** experience built as a native Shopify Online Store 2.0
 customization on top of Shopify's [Horizon](https://themes.shopify.com/themes/horizon) theme (v4.2.0).
