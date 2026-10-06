@@ -93,8 +93,11 @@
     padding-block: clamp(24px, 5vw, 64px) clamp(32px, 6vw, 80px);
   }
 
+  /* minmax(0, 1fr) stops wide children (e.g. the scrollable filter row) from
+     stretching the column past the viewport on small screens. */
   .yb2 {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: clamp(20px, 3vw, 32px);
     max-width: 1280px;
     margin-inline: auto;
@@ -180,6 +183,7 @@
 
   .yb2-layout {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 24px;
     align-items: start;
   }
@@ -198,6 +202,7 @@
   /* Shared step chrome */
   .yb2-step {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 20px;
     min-width: 0;
     animation: yb2-step-in 280ms var(--yb2-ease);
