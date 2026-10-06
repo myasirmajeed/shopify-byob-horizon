@@ -1277,5 +1277,20 @@
     "pattern_premium": "Premium foil",
     "image": "Image",
     "image_info": "Optional. Replaces the illustrated pattern."
+  },
+  "pz": {
+    "name": "Product personalizer",
+    "product": "Product",
+    "product_info": "Options must be: 1 box style, 2 color, 3 size.",
+    "addons": "Add-on products",
+    "addons_info": "Tag add-ons \"pz-addon:ribbon\", \"pz-addon:card\" or \"pz-addon:packaging\" to show them in the preview.",
+    "heading": "Heading",
+    "intro": "Introduction",
+    "max_chars": "Message character limit",
+    "max_quantity": "Maximum quantity",
+    "swatch_block": "Color swatch",
+    "option_value": "Color option value",
+    "swatch_color": "Swatch color",
+    "ink_color": "Lettering color on this box"
   }
 }

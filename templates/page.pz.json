@@ -1,0 +1,24 @@
+{
+  "sections": {
+    "customizer": {
+      "type": "pz-customizer",
+      "blocks": {
+        "swatch_classic": { "type": "swatch", "settings": { "option_value": "Classic", "color": "#c9a27a", "ink": "#3a2a1d" } },
+        "swatch_rose": { "type": "swatch", "settings": { "option_value": "Rose", "color": "#e6b7b9", "ink": "#5a2430" } },
+        "swatch_midnight": { "type": "swatch", "settings": { "option_value": "Midnight", "color": "#1f2a44", "ink": "#e8c77a" } },
+        "swatch_cream": { "type": "swatch", "settings": { "option_value": "Cream", "color": "#f1e8d8", "ink": "#3a2a1d" } },
+        "swatch_forest": { "type": "swatch", "settings": { "option_value": "Forest", "color": "#2f4a3a", "ink": "#e8d9a8" } }
+      },
+      "block_order": ["swatch_classic", "swatch_rose", "swatch_midnight", "swatch_cream", "swatch_forest"],
+      "settings": {
+        "product": "custom-gift-box",
+        "addons": ["pz-addon-premium-ribbon", "pz-addon-gift-card", "pz-addon-premium-packaging"],
+        "heading": "Design your gift box",
+        "intro": "<p>Choose a style, colour and size, add a personal message and finish it with extras. Your preview updates as you go.</p>",
+        "max_chars": 30,
+        "max_quantity": 20
+      }
+    }
+  },
+  "order": ["customizer"]
+}

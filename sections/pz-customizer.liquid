@@ -1,0 +1,364 @@
+{% comment %}
+  Section contract.
+  Product Personalizer: customers design a gift box (style × color × size variants),
+  add a personal message, choose lettering/design and optional add-on products, and
+  add everything to the cart in one request. Namespaced `pz-` so it is isolated from
+  the BYOB demos.
+  @example
+  <!-- Assigned through templates/page.pz.json on the /pages/custom-gift-box page -->
+{% endcomment %}
+
+{%- assign product = section.settings.product -%}
+
+<div class="pz-section">
+  {%- if product == blank -%}
+    <p class="pz-notice">{{ 'pz.no_product' | t }}</p>
+  {%- else -%}
+    {%- liquid
+      assign from_price = product.price_min | money
+      assign storage_key = 'pz:v1:' | append: section.id | append: ':' | append: product.id
+    -%}
+    <pz-customizer-component
+      class="pz"
+      data-storage-key="{{ storage_key | escape }}"
+      data-money-format="{{ shop.money_format | strip_html | escape }}"
+      data-currency="{{ cart.currency.iso_code }}"
+    >
+      <form class="pz-layout" novalidate on:submit="/handleSubmit">
+        <div class="pz-media">
+          {%- render 'pz-preview', section_id: section.id -%}
+        </div>
+
+        <div class="pz-panel">
+          <header class="pz-header">
+            <p class="pz-eyebrow">{{ 'pz.eyebrow' | t }}</p>
+            <h1 class="pz-title">{{ section.settings.heading | default: product.title | escape }}</h1>
+            <p class="pz-from">{{ 'pz.price_from' | t: price: from_price }}</p>
+            {%- if section.settings.intro != blank -%}
+              <div class="pz-intro">{{ section.settings.intro }}</div>
+            {%- endif -%}
+          </header>
+
+          <noscript><p class="pz-notice">{{ 'pz.no_js' | t }}</p></noscript>
+
+          <div class="pz-restored" ref="restored" hidden>
+            <p>{{ 'pz.restored' | t }}</p>
+            <button type="button" class="pz-link" on:click="/reset">{{ 'pz.reset' | t }}</button>
+          </div>
+
+          {%- render 'pz-options', product: product, section: section -%}
+          {%- render 'pz-message', section: section -%}
+          {%- render 'pz-addons', addons: section.settings.addons, section_id: section.id -%}
+          {%- render 'pz-purchase', section: section -%}
+        </div>
+      </form>
+
+      {%- render 'pz-data', product: product, section: section -%}
+    </pz-customizer-component>
+
+    <script src="{{ 'pz-customizer.js' | asset_url }}" type="module" fetchpriority="low"></script>
+  {%- endif -%}
+</div>
+
+{% stylesheet %}
+  /* Design tokens for the Product Personalizer, scoped to .pz-section. */
+  .pz-section {
+    --pz-ink: #1c1c1e;
+    --pz-muted: #5f5d5a;
+    --pz-paper: #ffffff;
+    --pz-bg: #f7f6f3;
+    --pz-stage: #ebe7e0;
+    --pz-line: rgb(28 28 30 / 0.12);
+    --pz-line-strong: rgb(28 28 30 / 0.3);
+    --pz-accent: #2f5d50;
+    --pz-accent-ink: #ffffff;
+    --pz-accent-soft: #e4eee9;
+    --pz-danger: #b23a2e;
+    --pz-danger-soft: #fbecea;
+    --pz-success: #2f6b4f;
+    --pz-radius: 14px;
+    --pz-radius-lg: 22px;
+    --pz-shadow: 0 1px 2px rgb(28 28 30 / 0.05), 0 10px 30px rgb(28 28 30 / 0.07);
+    --pz-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+    --pz-font-script: 'Segoe Script', 'Brush Script MT', 'Snell Roundhand', cursive;
+    --pz-font-serif: 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+    --pz-font-sans: var(--font-body--family, 'Helvetica Neue', Arial, sans-serif);
+    --pz-gutter: max(16px, var(--page-margin, 16px));
+
+    background: var(--pz-bg);
+    color: var(--pz-ink);
+    padding-block: clamp(20px, 4vw, 56px) clamp(32px, 6vw, 80px);
+  }
+
+  .pz {
+    display: block;
+    max-width: 1280px;
+    margin-inline: auto;
+    padding-inline: var(--pz-gutter);
+  }
+
+  .pz *:focus-visible {
+    outline: 2px solid var(--pz-accent);
+    outline-offset: 3px;
+  }
+
+  .pz-notice {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px var(--pz-gutter);
+  }
+
+  .pz-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(20px, 4vw, 56px);
+    align-items: start;
+  }
+
+  @media screen and (min-width: 990px) {
+    .pz-layout {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    }
+
+    .pz-media {
+      position: sticky;
+      inset-block-start: calc(var(--header-height, 0px) + 24px);
+    }
+  }
+
+  .pz-media,
+  .pz-panel {
+    min-width: 0;
+  }
+
+  .pz-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+
+  .pz-header {
+    display: grid;
+    gap: 8px;
+  }
+
+  .pz-eyebrow {
+    margin: 0;
+    color: var(--pz-accent);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .pz-title {
+    margin: 0;
+    font-family: var(--pz-font-serif);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 500;
+    line-height: 1.05;
+  }
+
+  .pz-from {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+  }
+
+  .pz-intro {
+    color: var(--pz-muted);
+    line-height: 1.6;
+  }
+
+  .pz-intro > * {
+    margin: 0;
+  }
+
+  .pz-restored {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    padding: 12px 16px;
+    border: 1px solid var(--pz-line);
+    border-radius: var(--pz-radius);
+    background: var(--pz-paper);
+    font-size: 0.875rem;
+  }
+
+  .pz-restored[hidden] {
+    display: none;
+  }
+
+  .pz-restored p {
+    margin: 0;
+  }
+
+  .pz-link {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--pz-accent);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+
+  /* Shared field chrome */
+  .pz-field {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .pz-field__legend {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    inline-size: 100%;
+    margin: 0;
+    padding: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+  }
+
+  .pz-field__value {
+    color: var(--pz-muted);
+    font-weight: 500;
+  }
+
+  .pz-field__help {
+    margin: 0;
+    color: var(--pz-muted);
+    font-size: 0.8125rem;
+  }
+
+  .pz-field__error {
+    display: flex;
+    gap: 6px;
+    margin: 0;
+    color: var(--pz-danger);
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  .pz-field__error[hidden] {
+    display: none;
+  }
+
+  .pz-field[data-invalid] .pz-field__legend {
+    color: var(--pz-danger);
+  }
+
+  /* Selectable cards (style, size, lettering, add-ons) */
+  .pz-choice {
+    position: relative;
+    display: grid;
+    gap: 2px;
+    padding: 14px 16px;
+    border: 1px solid var(--pz-line-strong);
+    border-radius: var(--pz-radius);
+    background: var(--pz-paper);
+    cursor: pointer;
+    transition: border-color 160ms var(--pz-ease), box-shadow 160ms var(--pz-ease), background-color 160ms;
+  }
+
+  .pz-choice:hover {
+    border-color: var(--pz-ink);
+  }
+
+  .pz-choice:has(:checked) {
+    border-color: var(--pz-accent);
+    background: var(--pz-accent-soft);
+    box-shadow: inset 0 0 0 1px var(--pz-accent);
+  }
+
+  .pz-choice:has(:focus-visible) {
+    outline: 2px solid var(--pz-accent);
+    outline-offset: 3px;
+  }
+
+  .pz-choice:has(:disabled) {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  .pz-choice__input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
+  }
+
+  .pz-choice__title {
+    font-weight: 600;
+  }
+
+  .pz-choice__meta {
+    color: var(--pz-muted);
+    font-size: 0.8125rem;
+  }
+
+  .pz-choice__tick {
+    position: absolute;
+    inset-block-start: 10px;
+    inset-inline-end: 10px;
+    display: grid;
+    place-items: center;
+    inline-size: 20px;
+    block-size: 20px;
+    border: 1px solid var(--pz-line-strong);
+    border-radius: 50%;
+    background: var(--pz-paper);
+    color: transparent;
+  }
+
+  .pz-choice:has(:checked) .pz-choice__tick {
+    border-color: var(--pz-accent);
+    background: var(--pz-accent);
+    color: var(--pz-accent-ink);
+  }
+
+  .pz-choice__tick svg {
+    inline-size: 10px;
+    block-size: 10px;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:pz.name",
+  "tag": "section",
+  "class": "pz-shopify-section",
+  "settings": [
+    { "type": "product", "id": "product", "label": "t:pz.product", "info": "t:pz.product_info" },
+    { "type": "product_list", "id": "addons", "label": "t:pz.addons", "info": "t:pz.addons_info", "limit": 6 },
+    { "type": "text", "id": "heading", "label": "t:pz.heading" },
+    { "type": "richtext", "id": "intro", "label": "t:pz.intro" },
+    { "type": "range", "id": "max_chars", "label": "t:pz.max_chars", "min": 10, "max": 60, "step": 1, "default": 30 },
+    { "type": "range", "id": "max_quantity", "label": "t:pz.max_quantity", "min": 1, "max": 50, "step": 1, "default": 20 }
+  ],
+  "blocks": [
+    {
+      "type": "swatch",
+      "name": "t:pz.swatch_block",
+      "settings": [
+        { "type": "text", "id": "option_value", "label": "t:pz.option_value" },
+        { "type": "color", "id": "color", "label": "t:pz.swatch_color", "default": "#c9a27a" },
+        { "type": "color", "id": "ink", "label": "t:pz.ink_color", "default": "#3a2a1d" }
+      ]
+    }
+  ],
+  "presets": [{ "name": "t:pz.name", "category": "t:categories.products" }]
+}
+{% endschema %}

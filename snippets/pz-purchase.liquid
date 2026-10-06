@@ -1,0 +1,372 @@
+{% doc %}
+  Renders the Product Personalizer purchase panel: price breakdown, quantity
+  stepper, validation summary, add-to-cart button and success state. The panel is
+  sticky at the bottom of the options column so the total and CTA stay in reach.
+
+  @param {object} section - The owning section, for settings and unique IDs
+
+  @example
+  {% render 'pz-purchase', section: section %}
+{% enddoc %}
+
+{%- assign qty_id = 'PzQuantity-' | append: section.id -%}
+
+<div class="pz-purchase" ref="purchase">
+  <details class="pz-breakdown" ref="breakdown">
+    <summary class="pz-breakdown__summary">
+      <span>{{ 'pz.summary_heading' | t }}</span>
+      <span class="pz-breakdown__variant" ref="variantLabel"></span>
+    </summary>
+    <dl class="pz-breakdown__list">
+      <div><dt>{{ 'pz.price_box' | t }}</dt><dd ref="priceBox"></dd></div>
+      <div><dt>{{ 'pz.price_addons' | t }}</dt><dd ref="priceAddons"></dd></div>
+      <div><dt>{{ 'pz.price_each' | t }}</dt><dd ref="priceEach"></dd></div>
+      <div><dt>{{ 'pz.price_quantity' | t }}</dt><dd ref="priceQuantity"></dd></div>
+    </dl>
+  </details>
+
+  <div class="pz-purchase__row">
+    <div class="pz-qty" data-field="quantity">
+      <label class="visually-hidden" for="{{ qty_id }}">{{ 'pz.quantity_label' | t }}</label>
+      <button type="button" class="pz-qty__button" ref="decreaseButton" on:click="/decrease" aria-label="{{ 'pz.decrease' | t }}">
+        {%- render 'pz-icon', name: 'minus' -%}
+      </button>
+      <input
+        class="pz-qty__input"
+        type="number"
+        id="{{ qty_id }}"
+        inputmode="numeric"
+        min="1"
+        max="{{ section.settings.max_quantity }}"
+        step="1"
+        value="1"
+        ref="quantityInput"
+        on:input="/handleQuantity"
+        on:blur="/normalizeQuantity"
+      >
+      <button type="button" class="pz-qty__button" ref="increaseButton" on:click="/increase" aria-label="{{ 'pz.increase' | t }}">
+        {%- render 'pz-icon', name: 'plus' -%}
+      </button>
+    </div>
+    <div class="pz-total">
+      <span class="pz-total__label">{{ 'pz.price_total' | t }}</span>
+      <span class="pz-total__value" ref="total"></span>
+    </div>
+  </div>
+
+  <div class="pz-errors" ref="errors" role="alert" tabindex="-1" hidden>
+    <p class="pz-errors__title">{%- render 'pz-icon', name: 'alert' -%}{{ 'pz.errors_heading' | t }}</p>
+    <ul class="pz-errors__list" ref="errorList"></ul>
+  </div>
+
+  <button type="submit" class="pz-submit" ref="submit">
+    {%- render 'pz-icon', name: 'cart' -%}
+    <span ref="submitLabel">{{ 'pz.add_to_cart' | t }}</span>
+  </button>
+
+  <div class="pz-success" ref="success" hidden>
+    <span class="pz-success__icon" aria-hidden="true">{%- render 'pz-icon', name: 'check' -%}</span>
+    <p class="pz-success__text">{{ 'pz.added_title' | t }}</p>
+    <button type="button" class="pz-link" on:click="/viewCart">{{ 'pz.view_cart' | t }}</button>
+  </div>
+
+  <p class="visually-hidden" role="status" aria-live="polite" ref="announcer"></p>
+</div>
+
+{% stylesheet %}
+  .pz-purchase {
+    position: sticky;
+    inset-block-end: 0;
+    z-index: 4;
+    display: grid;
+    gap: 12px;
+    margin-inline: calc(-1 * var(--pz-gutter));
+    padding: 14px var(--pz-gutter) calc(14px + env(safe-area-inset-bottom, 0px));
+    border-block-start: 1px solid var(--pz-line);
+    background: rgb(255 255 255 / 0.96);
+    box-shadow: 0 -10px 30px rgb(28 28 30 / 0.08);
+    backdrop-filter: blur(8px);
+  }
+
+  @media screen and (min-width: 750px) {
+    .pz-purchase {
+      inset-block-end: 16px;
+      margin-inline: 0;
+      padding: 18px 20px;
+      border: 1px solid var(--pz-line);
+      border-radius: var(--pz-radius-lg);
+      box-shadow: var(--pz-shadow);
+    }
+  }
+
+  .pz-breakdown__summary {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .pz-breakdown__summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .pz-breakdown__summary::after {
+    content: '';
+    flex: none;
+    inline-size: 8px;
+    block-size: 8px;
+    margin-inline-start: 4px;
+    border-block-end: 1.5px solid currentColor;
+    border-inline-end: 1.5px solid currentColor;
+    transform: rotate(45deg) translateY(-2px);
+    transition: transform 160ms;
+  }
+
+  .pz-breakdown[open] .pz-breakdown__summary::after {
+    transform: rotate(-135deg) translateY(-2px);
+  }
+
+  .pz-breakdown__variant {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--pz-muted);
+    font-weight: 500;
+    text-align: end;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pz-breakdown__list {
+    display: grid;
+    gap: 6px;
+    margin: 10px 0 0;
+    font-size: 0.875rem;
+  }
+
+  .pz-breakdown__list div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .pz-breakdown__list dt {
+    color: var(--pz-muted);
+  }
+
+  .pz-breakdown__list dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+  }
+
+  .pz-purchase__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .pz-qty {
+    display: grid;
+    grid-template-columns: 44px 52px 44px;
+    align-items: center;
+    border: 1px solid var(--pz-line-strong);
+    border-radius: 999px;
+    background: var(--pz-paper);
+  }
+
+  .pz-qty[data-invalid] {
+    border-color: var(--pz-danger);
+  }
+
+  .pz-qty__button {
+    display: grid;
+    place-items: center;
+    block-size: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: var(--pz-ink);
+    cursor: pointer;
+  }
+
+  .pz-qty__button:hover:not(:disabled) {
+    background: var(--pz-bg);
+  }
+
+  .pz-qty__button:disabled {
+    cursor: not-allowed;
+    opacity: 0.3;
+  }
+
+  .pz-qty__button svg {
+    inline-size: 14px;
+    block-size: 14px;
+  }
+
+  .pz-qty__input {
+    inline-size: 100%;
+    block-size: 44px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--pz-ink);
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    text-align: center;
+    -moz-appearance: textfield;
+  }
+
+  .pz-qty__input::-webkit-outer-spin-button,
+  .pz-qty__input::-webkit-inner-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
+  }
+
+  .pz-total {
+    display: grid;
+    justify-items: end;
+  }
+
+  .pz-total__label {
+    color: var(--pz-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .pz-total__value {
+    font-family: var(--pz-font-serif);
+    font-size: 1.625rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+
+  .pz-errors {
+    display: grid;
+    gap: 6px;
+    padding: 12px 14px;
+    border-radius: var(--pz-radius);
+    background: var(--pz-danger-soft);
+    color: var(--pz-danger);
+    font-size: 0.875rem;
+  }
+
+  .pz-errors[hidden] {
+    display: none;
+  }
+
+  .pz-errors:focus {
+    outline: 2px solid var(--pz-danger);
+    outline-offset: 2px;
+  }
+
+  .pz-errors__title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-weight: 700;
+  }
+
+  .pz-errors__title svg {
+    inline-size: 16px;
+    block-size: 16px;
+  }
+
+  .pz-errors__list {
+    margin: 0;
+    padding-inline-start: 22px;
+  }
+
+  .pz-errors__list button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+
+  .pz-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    inline-size: 100%;
+    min-block-size: 54px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--pz-ink);
+    color: #fff;
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 160ms var(--pz-ease), transform 160ms var(--pz-ease);
+  }
+
+  .pz-submit:hover:not(:disabled) {
+    background: var(--pz-accent);
+  }
+
+  .pz-submit:active:not(:disabled) {
+    transform: scale(0.99);
+  }
+
+  .pz-submit:disabled {
+    cursor: progress;
+    opacity: 0.6;
+  }
+
+  .pz-submit svg {
+    inline-size: 18px;
+    block-size: 18px;
+  }
+
+  .pz-success {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    color: var(--pz-success);
+    font-weight: 600;
+  }
+
+  .pz-success[hidden] {
+    display: none;
+  }
+
+  .pz-success__icon {
+    display: grid;
+    place-items: center;
+    inline-size: 26px;
+    block-size: 26px;
+    border-radius: 50%;
+    background: var(--pz-success);
+    color: #fff;
+  }
+
+  .pz-success__icon svg {
+    inline-size: 13px;
+    block-size: 13px;
+  }
+
+  .pz-success__text {
+    flex: 1;
+    margin: 0;
+  }
+{% endstylesheet %}

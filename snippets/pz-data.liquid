@@ -1,0 +1,101 @@
+{% doc %}
+  Outputs the Product Personalizer catalog (variants, add-ons, swatches, limits)
+  and interface strings as JSON for `<pz-customizer-component>`. Strings with
+  `[name]` placeholders are interpolated in JavaScript.
+
+  @param {object} product - The personalizable product
+  @param {object} section - The owning section, for settings and swatch blocks
+
+  @example
+  {% render 'pz-data', product: product, section: section %}
+{% enddoc %}
+
+<script type="application/json" ref="catalog">
+  {
+    "product": { "id": {{ product.id | json }}, "title": {{ product.title | json }} },
+    "maxChars": {{ section.settings.max_chars | json }},
+    "maxQuantity": {{ section.settings.max_quantity | json }},
+    "variants": [
+      {%- for variant in product.variants -%}
+        {
+          "id": {{ variant.id | json }},
+          "options": [{{ variant.option1 | json }}, {{ variant.option2 | json }}, {{ variant.option3 | json }}],
+          "price": {{ variant.price | json }},
+          "available": {{ variant.available | json }}
+        }{%- unless forloop.last -%},{%- endunless -%}
+      {%- endfor -%}
+    ],
+    "addons": [
+      {%- for addon in section.settings.addons -%}
+        {%- liquid
+          assign addon_key = ''
+          for tag in addon.tags
+            if tag contains 'pz-addon:'
+              assign addon_key = tag | remove: 'pz-addon:'
+            endif
+          endfor
+          assign addon_variant = addon.selected_or_first_available_variant
+        -%}
+        {
+          "id": {{ addon_variant.id | json }},
+          "productId": {{ addon.id | json }},
+          "title": {{ addon.title | json }},
+          "price": {{ addon_variant.price | json }},
+          "key": {{ addon_key | json }},
+          "available": {{ addon.available | json }}
+        }{%- unless forloop.last -%},{%- endunless -%}
+      {%- endfor -%}
+    ],
+    "swatches": [
+      {%- assign first_swatch = true -%}
+      {%- for block in section.blocks -%}
+        {%- if block.type == 'swatch' and block.settings.option_value != blank -%}
+          {%- unless first_swatch -%},{%- endunless -%}
+          {%- assign first_swatch = false -%}
+          { "value": {{ block.settings.option_value | json }}, "hex": {{ block.settings.color | json }}, "ink": {{ block.settings.ink | json }} }
+        {%- endif -%}
+      {%- endfor -%}
+    ]
+  }
+</script>
+
+<script type="application/json" ref="strings">
+  {
+    "placeholder": {{ 'pz.preview_placeholder' | t | json }},
+    "counter": {{ 'pz.counter' | t: count: '[count]', max: '[max]' | json }},
+    "none": {{ 'pz.none' | t | json }},
+    "from": {{ 'pz.price_from' | t: price: '[price]' | json }},
+    "addToCart": {{ 'pz.add_to_cart' | t | json }},
+    "adding": {{ 'pz.adding' | t | json }},
+    "added": {{ 'pz.added_title' | t | json }},
+    "errors": {
+      "style": {{ 'pz.error_style' | t | json }},
+      "color": {{ 'pz.error_color' | t | json }},
+      "size": {{ 'pz.error_size' | t | json }},
+      "unavailable": {{ 'pz.error_unavailable' | t | json }},
+      "message_long_one": {{ 'pz.error_message_long.one' | t | json }},
+      "message_long_other": {{ 'pz.error_message_long.other' | t: count: '[count]' | json }},
+      "message_chars": {{ 'pz.error_message_chars' | t: chars: '[chars]' | json }},
+      "quantity": {{ 'pz.error_quantity' | t: max: '[max]' | json }},
+      "generic": {{ 'pz.error_generic' | t | json }}
+    },
+    "lettering": {
+      "script": {{ 'pz.lettering.script' | t | json }},
+      "serif": {{ 'pz.lettering.serif' | t | json }},
+      "modern": {{ 'pz.lettering.modern' | t | json }}
+    },
+    "motif": {
+      "none": {{ 'pz.motif.none' | t | json }},
+      "hearts": {{ 'pz.motif.hearts' | t | json }},
+      "stars": {{ 'pz.motif.stars' | t | json }},
+      "floral": {{ 'pz.motif.floral' | t | json }}
+    },
+    "properties": {
+      "message": {{ 'pz.property_message' | t | json }},
+      "lettering": {{ 'pz.property_lettering' | t | json }},
+      "design": {{ 'pz.property_design' | t | json }},
+      "addons": {{ 'pz.property_addons' | t | json }},
+      "for": {{ 'pz.property_for' | t | json }}
+    }
+  }
+</script>

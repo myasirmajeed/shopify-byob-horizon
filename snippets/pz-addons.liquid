@@ -1,0 +1,77 @@
+{% doc %}
+  Renders optional add-on products as checkbox cards for the Product Personalizer.
+  Each add-on is a real product, so its price is charged by Shopify. A
+  `pz-addon:<key>` tag (ribbon, card, packaging) connects it to the preview.
+
+  @param {object} addons - Product list of add-on products
+  @param {string} section_id - The owning section ID, for unique IDs
+
+  @example
+  {% render 'pz-addons', addons: section.settings.addons, section_id: section.id %}
+{% enddoc %}
+
+{%- if addons != blank and addons.count > 0 -%}
+  <fieldset class="pz-field" data-field="addons">
+    <legend class="pz-field__legend">{{ 'pz.addons_heading' | t }}</legend>
+    <p class="pz-field__help">{{ 'pz.addons_help' | t }}</p>
+    <div class="pz-addons">
+      {%- for addon in addons -%}
+        {%- assign variant = addon.selected_or_first_available_variant -%}
+        {%- assign input_id = 'PzAddon-' | append: section_id | append: '-' | append: addon.id -%}
+        <label class="pz-choice pz-addon" for="{{ input_id }}">
+          <input
+            class="pz-choice__input"
+            type="checkbox"
+            id="{{ input_id }}"
+            value="{{ variant.id }}"
+            ref="addonInputs[]"
+            on:change="/toggleAddon"
+            {% unless addon.available %}
+              disabled
+            {% endunless %}
+          >
+          <span class="pz-choice__tick pz-choice__tick--square" aria-hidden="true">{%- render 'pz-icon', name: 'check' -%}</span>
+          <span class="pz-addon__row">
+            <span class="pz-choice__title">{{ addon.title | escape }}</span>
+            <span class="pz-addon__price">
+              {%- if addon.available -%}+{{ variant.price | money }}{%- else -%}{{ 'pz.sold_out' | t }}{%- endif -%}
+            </span>
+          </span>
+          {%- if addon.description != blank -%}
+            <span class="pz-choice__meta">{{ addon.description | strip_html | truncatewords: 14 }}</span>
+          {%- endif -%}
+        </label>
+      {%- endfor -%}
+    </div>
+  </fieldset>
+{%- endif -%}
+
+{% stylesheet %}
+  .pz-addons {
+    display: grid;
+    gap: 10px;
+  }
+
+  .pz-addon {
+    padding-inline-start: 48px;
+  }
+
+  .pz-choice__tick--square {
+    inset-block-start: 50%;
+    inset-inline: 16px auto;
+    border-radius: 6px;
+    transform: translateY(-50%);
+  }
+
+  .pz-addon__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .pz-addon__price {
+    flex: none;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+{% endstylesheet %}

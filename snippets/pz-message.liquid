@@ -1,0 +1,204 @@
+{% doc %}
+  Renders the "Add a personal message" fields for the Product Personalizer: the
+  message input with live counter and error, plus lettering and design choices
+  that only affect the preview and the cart line properties.
+
+  @param {object} section - The owning section, for settings and unique IDs
+
+  @example
+  {% render 'pz-message', section: section %}
+{% enddoc %}
+
+{%- liquid
+  assign max = section.settings.max_chars
+  assign input_id = 'PzMessage-' | append: section.id
+  assign help_id = 'PzMessageHelp-' | append: section.id
+  assign error_id = 'PzMessageError-' | append: section.id
+  assign letterings = 'script,serif,modern' | split: ','
+  assign motifs = 'none,hearts,stars,floral' | split: ','
+-%}
+
+<div class="pz-field pz-message-field" data-field="message">
+  <h2 class="pz-field__legend pz-field__heading">{{ 'pz.message_heading' | t }}</h2>
+
+  <div class="pz-message-input">
+    <label class="visually-hidden" for="{{ input_id }}">{{ 'pz.message_label' | t }}</label>
+    <input
+      class="pz-input"
+      type="text"
+      id="{{ input_id }}"
+      autocomplete="off"
+      spellcheck="true"
+      placeholder="{{ 'pz.message_placeholder' | t }}"
+      aria-describedby="{{ help_id }} {{ error_id }}"
+      ref="messageInput"
+      on:input="/handleMessage"
+    >
+    <span class="pz-counter" ref="messageCounter" aria-hidden="true">0 / {{ max }}</span>
+  </div>
+  <p class="pz-field__help" id="{{ help_id }}">{{ 'pz.message_help' | t: max: max }}</p>
+  <p class="pz-field__error" id="{{ error_id }}" data-field-error="message" hidden></p>
+
+  <fieldset class="pz-field pz-subfield">
+    <legend class="pz-field__legend pz-field__legend--small">{{ 'pz.lettering_label' | t }}</legend>
+    <div class="pz-letterings">
+      {%- for key in letterings -%}
+        {%- assign label_key = 'pz.lettering.' | append: key -%}
+        {%- assign id = 'PzLettering-' | append: section.id | append: '-' | append: key -%}
+        <label class="pz-choice pz-choice--center pz-lettering pz-lettering--{{ key }}" for="{{ id }}">
+          <input
+            class="pz-choice__input"
+            type="radio"
+            id="{{ id }}"
+            name="pz-lettering-{{ section.id }}"
+            value="{{ key }}"
+            ref="letteringInputs[]"
+            on:change="/selectLettering"
+            {% if forloop.first %}
+              checked
+            {% endif %}
+          >
+          <span class="pz-lettering__sample" aria-hidden="true">Aa</span>
+          <span class="pz-choice__meta">{{ label_key | t }}</span>
+        </label>
+      {%- endfor -%}
+    </div>
+  </fieldset>
+
+  <fieldset class="pz-field pz-subfield">
+    <legend class="pz-field__legend pz-field__legend--small">{{ 'pz.motif_label' | t }}</legend>
+    <div class="pz-motifs">
+      {%- for key in motifs -%}
+        {%- assign label_key = 'pz.motif.' | append: key -%}
+        {%- assign id = 'PzMotif-' | append: section.id | append: '-' | append: key -%}
+        <label class="pz-choice pz-choice--center pz-motif-choice" for="{{ id }}">
+          <input
+            class="pz-choice__input"
+            type="radio"
+            id="{{ id }}"
+            name="pz-motif-{{ section.id }}"
+            value="{{ key }}"
+            ref="motifInputs[]"
+            on:change="/selectMotif"
+            {% if forloop.first %}
+              checked
+            {% endif %}
+          >
+          <span class="pz-motif-choice__icon" aria-hidden="true">
+            {%- case key -%}
+              {%- when 'hearts' -%}
+                <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 4.6-7 9-7 9z"/></svg>
+              {%- when 'stars' -%}
+                <svg viewBox="0 0 24 24"><path d="M12 3l2.6 6 6.4.5-4.9 4.2 1.5 6.3L12 16.7 6.4 20l1.5-6.3L3 9.5 9.4 9z"/></svg>
+              {%- when 'floral' -%}
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.4"/><circle cx="17" cy="12" r="3.4"/><circle cx="12" cy="17" r="3.4"/><circle cx="7" cy="12" r="3.4"/></svg>
+              {%- else -%}
+                <svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+            {%- endcase -%}
+          </span>
+          <span class="pz-choice__meta">{{ label_key | t }}</span>
+        </label>
+      {%- endfor -%}
+    </div>
+  </fieldset>
+</div>
+
+{% stylesheet %}
+  .pz-field__heading {
+    font-size: 1.0625rem;
+  }
+
+  .pz-field__legend--small {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--pz-muted);
+  }
+
+  .pz-subfield {
+    gap: 8px;
+  }
+
+  .pz-message-input {
+    position: relative;
+  }
+
+  .pz-input {
+    inline-size: 100%;
+    min-block-size: 52px;
+    padding: 0 84px 0 16px;
+    border: 1px solid var(--pz-line-strong);
+    border-radius: var(--pz-radius);
+    background: var(--pz-paper);
+    color: var(--pz-ink);
+    font: inherit;
+    font-size: 1rem;
+    transition: border-color 160ms, box-shadow 160ms;
+  }
+
+  .pz-input:focus {
+    border-color: var(--pz-accent);
+    box-shadow: 0 0 0 3px var(--pz-accent-soft);
+    outline: none;
+  }
+
+  .pz-input[aria-invalid='true'] {
+    border-color: var(--pz-danger);
+    box-shadow: 0 0 0 3px var(--pz-danger-soft);
+  }
+
+  .pz-counter {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-end: 14px;
+    display: flex;
+    align-items: center;
+    color: var(--pz-muted);
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+
+  .pz-counter[data-state='near'] {
+    color: #8a5a00;
+    font-weight: 600;
+  }
+
+  .pz-counter[data-state='over'] {
+    color: var(--pz-danger);
+    font-weight: 700;
+  }
+
+  .pz-letterings {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .pz-motifs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .pz-lettering,
+  .pz-motif-choice {
+    padding: 10px 6px;
+  }
+
+  .pz-lettering__sample {
+    font-size: 1.5rem;
+    line-height: 1.2;
+  }
+
+  .pz-lettering--script .pz-lettering__sample { font-family: var(--pz-font-script); }
+  .pz-lettering--serif .pz-lettering__sample { font-family: var(--pz-font-serif); }
+  .pz-lettering--modern .pz-lettering__sample { font-family: var(--pz-font-sans); font-weight: 600; text-transform: uppercase; }
+
+  .pz-motif-choice__icon svg {
+    inline-size: 24px;
+    block-size: 24px;
+    fill: currentColor;
+  }
+{% endstylesheet %}

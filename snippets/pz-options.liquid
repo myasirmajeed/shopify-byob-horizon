@@ -1,0 +1,226 @@
+{% doc %}
+  Renders the variant option pickers for the Product Personalizer: box style
+  (option 1), color swatches (option 2) and size (option 3). Native radio inputs
+  provide keyboard and screen reader behaviour; prices are filled in by JavaScript
+  because they depend on the other selections.
+
+  @param {object} product - The personalizable product
+  @param {object} section - The owning section, for swatch blocks and unique IDs
+
+  @example
+  {% render 'pz-options', product: product, section: section %}
+{% enddoc %}
+
+{%- liquid
+  assign style_option = product.options_with_values[0]
+  assign color_option = product.options_with_values[1]
+  assign size_option = product.options_with_values[2]
+  assign label_style = 'pz.style_label' | t
+  assign label_color = 'pz.color_label' | t
+  assign label_size = 'pz.size_label' | t
+-%}
+
+<fieldset class="pz-field" data-field="style">
+  <legend class="pz-field__legend">
+    <span>{{ style_option.name | default: label_style | escape }}</span>
+    <span class="pz-field__value" ref="styleValue"></span>
+  </legend>
+  <div class="pz-styles">
+    {%- for value in style_option.values -%}
+      {%- assign input_id = 'PzStyle-' | append: section.id | append: '-' | append: forloop.index -%}
+      <label class="pz-choice" for="{{ input_id }}">
+        <input
+          class="pz-choice__input"
+          type="radio"
+          id="{{ input_id }}"
+          name="pz-style-{{ section.id }}"
+          value="{{ value | escape }}"
+          data-option="style"
+          ref="styleInputs[]"
+          on:change="/selectOption"
+        >
+        <span class="pz-choice__tick" aria-hidden="true">{%- render 'pz-icon', name: 'check' -%}</span>
+        <span class="pz-choice__title">{{ value | escape }}</span>
+        <span class="pz-choice__meta" data-option-price></span>
+      </label>
+    {%- endfor -%}
+  </div>
+  <p class="pz-field__error" data-field-error="style" hidden></p>
+</fieldset>
+
+<fieldset class="pz-field" data-field="color">
+  <legend class="pz-field__legend">
+    <span>{{ color_option.name | default: label_color | escape }}</span>
+    <span class="pz-field__value" ref="colorValue"></span>
+  </legend>
+  <div class="pz-swatches">
+    {%- for value in color_option.values -%}
+      {%- liquid
+        assign swatch_hex = '#c9a27a'
+        for block in section.blocks
+          if block.type == 'swatch' and block.settings.option_value == value
+            assign swatch_hex = block.settings.color
+          endif
+        endfor
+        assign input_id = 'PzColor-' | append: section.id | append: '-' | append: forloop.index
+      -%}
+      <label class="pz-swatch" for="{{ input_id }}">
+        <input
+          class="pz-swatch__input"
+          type="radio"
+          id="{{ input_id }}"
+          name="pz-color-{{ section.id }}"
+          value="{{ value | escape }}"
+          data-option="color"
+          ref="colorInputs[]"
+          on:change="/selectOption"
+        >
+        <span class="pz-swatch__chip" style="--pz-swatch: {{ swatch_hex }};" aria-hidden="true">
+          <span class="pz-swatch__check">{%- render 'pz-icon', name: 'check' -%}</span>
+        </span>
+        <span class="pz-swatch__label">{{ value | escape }}</span>
+      </label>
+    {%- endfor -%}
+  </div>
+  <p class="pz-field__error" data-field-error="color" hidden></p>
+</fieldset>
+
+<fieldset class="pz-field" data-field="size">
+  <legend class="pz-field__legend">
+    <span>{{ size_option.name | default: label_size | escape }}</span>
+    <span class="pz-field__value" ref="sizeValue"></span>
+  </legend>
+  <div class="pz-sizes">
+    {%- for value in size_option.values -%}
+      {%- assign input_id = 'PzSize-' | append: section.id | append: '-' | append: forloop.index -%}
+      <label class="pz-choice pz-choice--center" for="{{ input_id }}">
+        <input
+          class="pz-choice__input"
+          type="radio"
+          id="{{ input_id }}"
+          name="pz-size-{{ section.id }}"
+          value="{{ value | escape }}"
+          data-option="size"
+          ref="sizeInputs[]"
+          on:change="/selectOption"
+        >
+        <span class="pz-choice__title">{{ value | escape }}</span>
+        <span class="pz-choice__meta" data-option-price></span>
+      </label>
+    {%- endfor -%}
+  </div>
+  <p class="pz-field__error" data-field-error="size" hidden></p>
+</fieldset>
+
+{% stylesheet %}
+  .pz-styles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .pz-sizes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .pz-choice--center {
+    justify-items: center;
+    padding-block: 14px;
+    text-align: center;
+  }
+
+  .pz-swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+    gap: 8px;
+  }
+
+  .pz-swatch {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    padding: 8px 4px;
+    border-radius: var(--pz-radius);
+    cursor: pointer;
+  }
+
+  .pz-swatch__input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
+  }
+
+  .pz-swatch__chip {
+    display: grid;
+    place-items: center;
+    inline-size: 44px;
+    block-size: 44px;
+    border-radius: 50%;
+    background: var(--pz-swatch);
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12), 0 0 0 3px var(--pz-bg), 0 0 0 4px transparent;
+    color: #fff;
+    transition: box-shadow 160ms var(--pz-ease), transform 160ms var(--pz-ease);
+  }
+
+  .pz-swatch:hover .pz-swatch__chip {
+    transform: scale(1.06);
+  }
+
+  .pz-swatch:has(:checked) .pz-swatch__chip {
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12), 0 0 0 3px var(--pz-bg), 0 0 0 5px var(--pz-ink);
+  }
+
+  .pz-swatch__check {
+    display: grid;
+    place-items: center;
+    inline-size: 20px;
+    block-size: 20px;
+    border-radius: 50%;
+    background: rgb(28 28 30 / 0.65);
+    opacity: 0;
+    transition: opacity 160ms;
+  }
+
+  .pz-swatch__check svg {
+    inline-size: 11px;
+    block-size: 11px;
+  }
+
+  /* The tick and the bold label mean selection is not shown by colour alone. */
+  .pz-swatch:has(:checked) .pz-swatch__check {
+    opacity: 1;
+  }
+
+  .pz-swatch__label {
+    font-size: 0.8125rem;
+  }
+
+  .pz-swatch:has(:checked) .pz-swatch__label {
+    font-weight: 700;
+  }
+
+  .pz-swatch:has(:focus-visible) .pz-swatch__chip {
+    outline: 2px solid var(--pz-accent);
+    outline-offset: 5px;
+  }
+
+  .pz-swatch:has(:disabled) {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pz-swatch__chip {
+      transition: none;
+    }
+
+    .pz-swatch:hover .pz-swatch__chip {
+      transform: none;
+    }
+  }
+{% endstylesheet %}

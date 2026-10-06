@@ -1,0 +1,317 @@
+{% doc %}
+  Renders the Product Personalizer's live preview: an original SVG gift box whose
+  colour, style, size, message, design and add-ons are driven by data attributes
+  and CSS custom properties that `pz-preview.js` updates.
+
+  @param {string} section_id - The owning section ID, for unique SVG IDs
+
+  @example
+  {% render 'pz-preview', section_id: section.id %}
+{% enddoc %}
+
+{%- assign uid = 'pz' | append: section_id -%}
+
+<div class="pz-preview">
+  <svg
+    class="pz-preview__svg"
+    viewBox="30 70 380 300"
+    role="img"
+    aria-labelledby="{{ uid }}-title {{ uid }}-desc"
+    ref="preview"
+    data-style="keepsake"
+    data-size="medium"
+    data-motif="none"
+    data-lettering="script"
+    data-ribbon="false"
+    data-card="false"
+    data-packaging="false"
+    data-has-message="false"
+  >
+    <title id="{{ uid }}-title">{{ 'pz.preview_label' | t }}</title>
+    <desc id="{{ uid }}-desc" ref="previewDesc"></desc>
+    <defs>
+      <pattern id="{{ uid }}-hearts" width="34" height="34" patternUnits="userSpaceOnUse">
+        <path d="M17 26s-9-5.6-9-11.2A4.8 4.8 0 0 1 17 12a4.8 4.8 0 0 1 9 2.8C26 20.4 17 26 17 26z" fill="var(--pz-ink)"/>
+      </pattern>
+      <pattern id="{{ uid }}-stars" width="30" height="30" patternUnits="userSpaceOnUse">
+        <path d="M15 6l2.4 5.6 6 .5-4.6 4 1.4 5.9L15 19l-5.2 3 1.4-5.9-4.6-4 6-.5z" fill="var(--pz-ink)"/>
+      </pattern>
+      <g id="{{ uid }}-bow" class="pz-bow">
+        <ellipse cx="300" cy="134" rx="22" ry="11" transform="rotate(-16 300 134)"/>
+        <ellipse cx="344" cy="126" rx="22" ry="11" transform="rotate(12 344 126)"/>
+        <path d="M314 138l-10 26 9-3 5 7 4-28z"/>
+        <path d="M330 136l12 25-9-2-4 8-7-28z"/>
+        <circle cx="322" cy="132" r="8" class="pz-bow-knot"/>
+      </g>
+      <pattern id="{{ uid }}-floral" width="40" height="40" patternUnits="userSpaceOnUse">
+        <g fill="var(--pz-ink)">
+          <circle cx="20" cy="13" r="4"/><circle cx="27" cy="20" r="4"/><circle cx="20" cy="27" r="4"/><circle cx="13" cy="20" r="4"/>
+        </g>
+        <circle cx="20" cy="20" r="3" fill="var(--pz-box)"/>
+      </pattern>
+    </defs>
+
+    <ellipse class="pz-shadow" cx="220" cy="338" rx="160" ry="16"/>
+
+    <g class="pz-box">
+      {%- comment -%} Tissue paper (Premium Packaging) peeks out behind the lid {%- endcomment -%}
+      <g class="pz-part pz-part--packaging">
+        <path d="M128 132l42-46 30 40z" fill="#f6e3e6"/>
+        <path d="M180 128l50-56 34 52z" fill="#fbf1ea"/>
+        <path d="M250 126l56-40 18 46z" fill="#f3dfe3"/>
+      </g>
+
+      {%- comment -%} Body {%- endcomment -%}
+      <path class="pz-face pz-face--side" d="M330 170l40-25v150l-40 25z"/>
+      <rect class="pz-face pz-face--front" x="90" y="170" width="240" height="150"/>
+      <rect class="pz-motif pz-motif--hearts" x="90" y="170" width="240" height="150" fill="url(#{{ uid }}-hearts)"/>
+      <rect class="pz-motif pz-motif--stars" x="90" y="170" width="240" height="150" fill="url(#{{ uid }}-stars)"/>
+      <rect class="pz-motif pz-motif--floral" x="90" y="170" width="240" height="150" fill="url(#{{ uid }}-floral)"/>
+
+      {%- comment -%} Drawer style: open top and a drawer front with a pull {%- endcomment -%}
+      <g class="pz-part pz-part--drawer">
+        <path class="pz-face pz-face--top" d="M90 170l40-25h240l-40 25z"/>
+        <rect class="pz-drawer" x="98" y="214" width="224" height="100" rx="2"/>
+        <path class="pz-drawer-pull" d="M196 314a14 14 0 0 1 28 0z"/>
+      </g>
+
+      {%- comment -%} Keepsake style: overhanging lid {%- endcomment -%}
+      <g class="pz-part pz-part--lid">
+        <path class="pz-face pz-face--lid-top" d="M82 150l40-25h256l-40 25z"/>
+        <path class="pz-face pz-face--lid-side" d="M338 150l40-25v36l-40 25z"/>
+        <rect class="pz-face pz-face--lid-front" x="82" y="150" width="256" height="36"/>
+      </g>
+
+      {%- comment -%} Gold edge (Premium Packaging) {%- endcomment -%}
+      <g class="pz-part pz-part--packaging pz-gold-edge">
+        <rect x="90" y="170" width="240" height="150" fill="none"/>
+        <circle cx="300" cy="168" r="11" class="pz-seal"/>
+      </g>
+
+      {%- comment -%} Message, foil-stamped on the front {%- endcomment -%}
+      <text
+        class="pz-message"
+        x="200"
+        y="262"
+        text-anchor="middle"
+        dominant-baseline="middle"
+        font-size="26"
+        data-pz-message
+      >{{ 'pz.preview_placeholder' | t }}</text>
+
+      {%- comment -%} Ribbon (Premium Ribbon) {%- endcomment -%}
+      {%- comment -%} Keepsake: band over the lid and down the front {%- endcomment -%}
+      <g class="pz-part pz-part--ribbon pz-part--ribbon-keepsake">
+        <path class="pz-ribbon" d="M292 150l40-25h22l-40 25z"/>
+        <rect class="pz-ribbon" x="292" y="150" width="22" height="170"/>
+        <rect class="pz-ribbon pz-ribbon--shade" x="292" y="150" width="22" height="36" opacity="0.35"/>
+        <use href="#{{ uid }}-bow" x="0" y="0"/>
+      </g>
+      {%- comment -%} Drawer: band over the open top and down the front {%- endcomment -%}
+      <g class="pz-part pz-part--ribbon pz-part--ribbon-drawer">
+        <path class="pz-ribbon" d="M292 170l40-25h22l-40 25z"/>
+        <rect class="pz-ribbon" x="292" y="170" width="22" height="150"/>
+        <use href="#{{ uid }}-bow" x="0" y="20"/></g>
+
+      {%- comment -%} Gift card tag (Gift Card) {%- endcomment -%}
+      <g class="pz-part pz-part--card">
+        <path d="M318 132q30 40 34 72" class="pz-card-string"/>
+        <g transform="rotate(8 360 238)">
+          <rect x="326" y="200" width="70" height="48" rx="4" class="pz-card"/>
+          <text x="361" y="228" text-anchor="middle" class="pz-card-text">For you</text>
+        </g>
+      </g>
+    </g>
+  </svg>
+  <p class="pz-preview__caption" ref="previewCaption" aria-hidden="true"></p>
+</div>
+
+{% stylesheet %}
+  .pz-preview {
+    position: relative;
+    display: grid;
+    gap: 12px;
+    padding: clamp(16px, 4vw, 40px);
+    border-radius: var(--pz-radius-lg);
+    background:
+      radial-gradient(120% 90% at 50% 25%, #ffffff 0%, var(--pz-stage) 70%);
+    overflow: hidden;
+  }
+
+  .pz-preview__svg {
+    --pz-box: #c9a27a;
+    --pz-ink: #3a2a1d;
+    --pz-scale: 0.9;
+    --pz-ribbon: #b8893b;
+    --pz-gold: #c9a24d;
+
+    display: block;
+    inline-size: 100%;
+    max-inline-size: 560px;
+    block-size: auto;
+    margin-inline: auto;
+    overflow: visible;
+  }
+
+  /* Keep the preview prominent on phones without pushing every option off-screen. */
+  @media screen and (max-width: 989px) {
+    .pz-preview__svg {
+      max-block-size: 44vh;
+    }
+  }
+
+  .pz-preview__svg[data-size='small'] { --pz-scale: 0.74; }
+  .pz-preview__svg[data-size='medium'] { --pz-scale: 0.87; }
+  .pz-preview__svg[data-size='large'] { --pz-scale: 1; }
+
+  .pz-shadow {
+    fill: rgb(28 28 30 / 0.12);
+    transform: scaleX(var(--pz-scale));
+    transform-box: view-box;
+    transform-origin: 220px 338px;
+    transition: transform 320ms var(--pz-ease);
+  }
+
+  .pz-box {
+    transform: scale(var(--pz-scale));
+    transform-box: view-box;
+    transform-origin: 220px 330px;
+    transition: transform 320ms var(--pz-ease);
+  }
+
+  .pz-face {
+    transition: fill 260ms var(--pz-ease);
+  }
+
+  .pz-face--front { fill: var(--pz-box); }
+  .pz-face--side { fill: color-mix(in srgb, var(--pz-box) 72%, #000); }
+  .pz-face--top { fill: color-mix(in srgb, var(--pz-box) 55%, #000); }
+  .pz-face--lid-top { fill: color-mix(in srgb, var(--pz-box) 82%, #fff); }
+  .pz-face--lid-side { fill: color-mix(in srgb, var(--pz-box) 66%, #000); }
+  .pz-face--lid-front { fill: color-mix(in srgb, var(--pz-box) 92%, #fff); }
+
+  .pz-drawer {
+    fill: color-mix(in srgb, var(--pz-box) 90%, #fff);
+    stroke: color-mix(in srgb, var(--pz-box) 70%, #000);
+    stroke-width: 1.5;
+    transition: fill 260ms var(--pz-ease);
+  }
+
+  .pz-drawer-pull {
+    fill: color-mix(in srgb, var(--pz-box) 60%, #000);
+  }
+
+  .pz-motif {
+    opacity: 0;
+    transition: opacity 220ms var(--pz-ease);
+  }
+
+  .pz-preview__svg[data-motif='hearts'] .pz-motif--hearts,
+  .pz-preview__svg[data-motif='stars'] .pz-motif--stars,
+  .pz-preview__svg[data-motif='floral'] .pz-motif--floral {
+    opacity: 0.16;
+  }
+
+  /* Style switching */
+  .pz-part {
+    transition: opacity 220ms var(--pz-ease);
+  }
+
+  .pz-preview__svg[data-style='keepsake'] .pz-part--drawer,
+  .pz-preview__svg[data-style='drawer'] .pz-part--lid,
+  .pz-preview__svg[data-ribbon='false'] .pz-part--ribbon,
+  .pz-preview__svg[data-card='false'] .pz-part--card,
+  .pz-preview__svg[data-packaging='false'] .pz-part--packaging {
+    opacity: 0;
+  }
+
+  /* Each box style has its own ribbon geometry. */
+  .pz-preview__svg[data-style='keepsake'] .pz-part--ribbon-drawer,
+  .pz-preview__svg[data-style='drawer'] .pz-part--ribbon-keepsake {
+    opacity: 0;
+  }
+
+  .pz-message {
+    fill: var(--pz-ink);
+    font-family: var(--pz-font-script);
+    letter-spacing: 0.01em;
+    transition: fill 260ms var(--pz-ease);
+  }
+
+  .pz-preview__svg[data-has-message='false'] .pz-message {
+    opacity: 0.45;
+    font-style: italic;
+  }
+
+  .pz-preview__svg[data-lettering='serif'] .pz-message {
+    font-family: var(--pz-font-serif);
+    letter-spacing: 0.04em;
+  }
+
+  .pz-preview__svg[data-lettering='modern'] .pz-message {
+    font-family: var(--pz-font-sans);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .pz-ribbon,
+  .pz-bow ellipse,
+  .pz-bow path {
+    fill: var(--pz-ribbon);
+  }
+
+  .pz-ribbon--shade {
+    fill: color-mix(in srgb, var(--pz-ribbon) 70%, #000);
+  }
+
+  .pz-bow-knot {
+    fill: color-mix(in srgb, var(--pz-ribbon) 80%, #000);
+  }
+
+  .pz-gold-edge rect {
+    stroke: var(--pz-gold);
+    stroke-width: 4;
+  }
+
+  .pz-seal {
+    fill: var(--pz-gold);
+    stroke: #fff6dc;
+    stroke-width: 2;
+  }
+
+  .pz-card {
+    fill: #fffdf8;
+    stroke: rgb(28 28 30 / 0.15);
+  }
+
+  .pz-card-text {
+    fill: #3a2a1d;
+    font-family: var(--pz-font-script);
+    font-size: 13px;
+  }
+
+  .pz-card-string {
+    fill: none;
+    stroke: var(--pz-ribbon);
+    stroke-width: 1.5;
+  }
+
+  .pz-preview__caption {
+    margin: 0;
+    color: var(--pz-muted);
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pz-box,
+    .pz-shadow,
+    .pz-face,
+    .pz-part,
+    .pz-motif,
+    .pz-message {
+      transition: none;
+    }
+  }
+{% endstylesheet %}
