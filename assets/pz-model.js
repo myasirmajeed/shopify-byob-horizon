@@ -203,12 +203,14 @@ export function buildCartItems(catalog, design, labels, names, bundleId) {
   properties._pz_bundle = bundleId;
 
   const boxLabel = `${catalog.product.title} (${design.color} / ${design.size})`;
+  // Shopify lists the most recently added line first, so the box goes last to
+  // appear above its add-ons in the cart.
   return [
-    { id: variant.id, quantity: design.quantity, properties },
     ...selectedAddons.map((addon) => ({
       id: addon.id,
       quantity: design.quantity,
       properties: { [labels.for]: boxLabel, _pz_bundle: bundleId },
     })),
+    { id: variant.id, quantity: design.quantity, properties },
   ];
 }
