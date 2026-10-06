@@ -50,7 +50,8 @@
         {
           "id": {{ flavor.id | json }},
           "title": {{ flavor.title | json }},
-          "available": {{ flavor.available | json }}
+          "available": {{ flavor.available | json }},
+          "image": {% if flavor.featured_image %}{{ flavor.featured_image | image_url: width: 160, height: 160, crop: 'center' | json }}{% else %}null{% endif %}
         }{%- unless forloop.last -%},{%- endunless -%}
       {%- endfor -%}
     ]

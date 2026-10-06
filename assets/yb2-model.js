@@ -13,7 +13,7 @@
  * @property {Array<{ id: number, option1: string, option2: string, price: number, available: boolean }>} variants
  * @property {Array<{ value: string, label: string, pieces: number }>} sizes
  * @property {Array<{ value: string, label: string }>} sleeves
- * @property {Array<{ id: number, title: string, available: boolean }>} flavors
+ * @property {Array<{ id: number, title: string, available: boolean, image?: string | null }>} flavors
  */
 
 /**

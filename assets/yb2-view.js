@@ -14,7 +14,7 @@ import { canVisit, findVariant, pricing, sleeveSurcharge } from '@theme/yb2-mode
  * @property {ReturnType<typeof import('@theme/yb2-model').validate>} validation
  * @property {Record<string, any>} strings
  * @property {(cents: number | null) => string} money
- * @property {Map<string, { title: string, shell: string, accent: string }>} flavorMeta
+ * @property {Map<string, { title: string, shell: string, accent: string, image: string | null }>} flavorMeta
  * @property {string} flash - Transient warning shown in the counter (e.g. box full)
  */
 
@@ -194,6 +194,11 @@ export function renderTray(refs, vm) {
       const piece = document.createElement('button');
       piece.type = 'button';
       piece.className = `yb2-tray__piece yb2-shell--${meta?.shell ?? 'dark'} yb2-accent--${meta?.accent ?? 'caramel'}`;
+      if (meta?.image) {
+        // Product photo when available; the shell/accent colours stay as the fallback.
+        piece.classList.add('yb2-tray__piece--photo');
+        piece.style.backgroundImage = `url("${meta.image}")`;
+      }
       piece.dataset.flavorId = id;
       piece.setAttribute('on:click', '/removeFlavor');
       piece.setAttribute('aria-label', fill(strings.removeOne, { flavor: meta?.title ?? '' }));
@@ -273,9 +278,23 @@ export function renderReview(refs, vm) {
     const meta = vm.flavorMeta.get(String(flavor.id));
     const item = document.createElement('li');
     item.className = 'yb2-review__flavor';
-    const dot = document.createElement('span');
-    dot.className = `yb2-review__dot yb2-shell--${meta?.shell ?? 'dark'} yb2-accent--${meta?.accent ?? 'caramel'}`;
-    dot.setAttribute('aria-hidden', 'true');
+    /** @type {HTMLElement} */
+    let dot;
+    if (meta?.image) {
+      // Decorative: the flavor name is right next to it.
+      const img = document.createElement('img');
+      img.className = 'yb2-review__thumb';
+      img.src = meta.image;
+      img.alt = '';
+      img.width = 48;
+      img.height = 48;
+      img.loading = 'lazy';
+      dot = img;
+    } else {
+      dot = document.createElement('span');
+      dot.className = `yb2-review__dot yb2-shell--${meta?.shell ?? 'dark'} yb2-accent--${meta?.accent ?? 'caramel'}`;
+      dot.setAttribute('aria-hidden', 'true');
+    }
     const name = document.createElement('span');
     name.className = 'yb2-review__flavor-name';
     name.textContent = flavor.title;

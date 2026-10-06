@@ -179,6 +179,16 @@
     background: var(--yb2-accent-c);
   }
 
+  .yb2-tray__piece--photo {
+    background-position: center;
+    background-size: cover;
+    box-shadow: 0 0 0 2px rgb(255 255 255 / 0.85), 0 2px 4px rgb(0 0 0 / 0.4);
+  }
+
+  .yb2-tray__piece--photo::after {
+    display: none;
+  }
+
   .yb2-tray__piece:hover {
     filter: brightness(1.1);
   }

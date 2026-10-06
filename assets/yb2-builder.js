@@ -37,7 +37,7 @@ class Yb2BuilderComponent extends Component {
   /** @type {Record<string, any>} */
   #strings = {};
 
-  /** @type {Map<string, { title: string, shell: string, accent: string }>} */
+  /** @type {Map<string, { title: string, shell: string, accent: string, image: string | null }>} */
   #flavorMeta = new Map();
 
   /** @type {ReturnType<typeof createStore<import('@theme/yb2-model').BoxState>> | null} */
@@ -70,6 +70,7 @@ class Yb2BuilderComponent extends Component {
         title: flavor?.title ?? '',
         shell: card.dataset.shell ?? 'dark',
         accent: card.dataset.accent ?? 'caramel',
+        image: flavor?.image ?? null,
       });
     }
 
