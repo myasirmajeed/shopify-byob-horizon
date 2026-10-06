@@ -43,6 +43,10 @@ sticky summary sidebar on desktop and sticky bottom bar with expandable box prev
 search that never touch selections; tray slots you can click to remove a piece; state restored after a
 refresh with a "Start over" option; focus moves to each step heading; one polite live region.
 
+**Demo data.** `data/yb2-products.csv` recreates the box product (16 variants) and the 12 flavor
+products via *Products → Import*. Then create a page with the `yb2` template. (`data/` is listed in
+`.shopifyignore`, so theme pushes skip it.)
+
 **Images.** Flavor product photos and sleeve photos are free stock images from
 [Unsplash](https://unsplash.com/license) (free for commercial use; credit is courtesy):
 Rosemary Williams, Ilya Mashkov, Massimo Adami, Jana Ohajdova, Monika Grabkowska,

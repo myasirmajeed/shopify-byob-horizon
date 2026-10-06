@@ -1,0 +1,29 @@
+Handle,Title,Body (HTML),Vendor,Type,Tags,Published,Option1 Name,Option1 Value,Option2 Name,Option2 Value,Variant SKU,Variant Grams,Variant Inventory Tracker,Variant Inventory Policy,Variant Fulfillment Service,Variant Price,Variant Requires Shipping,Variant Taxable,Status
+chocolate-dark-sea-salt-caramel,Dark Sea Salt Caramel,<p>70% dark ganache wrapped around a soft salted caramel heart.</p>,Yasir Demo Lab,Dark Chocolate,"yb2-flavor, Best Seller, yb2-shell:dark, yb2-top:salt, yb2-accent:caramel",TRUE,Title,Default Title,,,YB2-DARK-SEA-SALT-CARAMEL,12,,deny,manual,3.50,TRUE,TRUE,active
+chocolate-milk-hazelnut-praline,Milk Hazelnut Praline,<p>Creamy milk chocolate with a crunchy roasted hazelnut praline.</p>,Yasir Demo Lab,Milk Chocolate,"yb2-flavor, Best Seller, yb2-shell:milk, yb2-top:nut, yb2-accent:hazelnut",TRUE,Title,Default Title,,,YB2-MILK-HAZELNUT-PRALINE,12,,deny,manual,3.50,TRUE,TRUE,active
+chocolate-raspberry-rose,Raspberry Rose,<p>Tart raspberry ganache with a delicate hint of rose petal.</p>,Yasir Demo Lab,White Chocolate,"yb2-flavor, yb2-shell:white, yb2-top:drizzle, yb2-accent:raspberry",TRUE,Title,Default Title,,,YB2-RASPBERRY-ROSE,12,,deny,manual,3.50,TRUE,TRUE,active
+chocolate-madagascar-vanilla-bean,Madagascar Vanilla Bean,<p>Silky white chocolate infused with real vanilla seeds.</p>,Yasir Demo Lab,White Chocolate,"yb2-flavor, yb2-shell:white, yb2-top:dust, yb2-accent:vanilla",TRUE,Title,Default Title,,,YB2-MADAGASCAR-VANILLA-BEAN,12,,deny,manual,3.50,TRUE,TRUE,active
+chocolate-sicilian-pistachio,Sicilian Pistachio,<p>Bright pistachio cream topped with a crushed pistachio crown.</p>,Yasir Demo Lab,Milk Chocolate,"yb2-flavor, Best Seller, yb2-shell:milk, yb2-top:nut, yb2-accent:pistachio",TRUE,Title,Default Title,,,YB2-SICILIAN-PISTACHIO,12,,deny,manual,3.50,TRUE,TRUE,active
+chocolate-espresso-crunch,Espresso Crunch,<p>Single-origin espresso ganache with a crisp cocoa crunch.</p>,Yasir Demo Lab,Dark Chocolate,"yb2-flavor, Vegan, yb2-shell:dark, yb2-top:dust, yb2-accent:espresso",TRUE,Title,Default Title,,,YB2-ESPRESSO-CRUNCH,12,,deny,manual,3.50,TRUE,TRUE,active
+chocolate-toasted-coconut-cream,Toasted Coconut Cream,<p>Coconut milk ganache rolled in golden toasted coconut.</p>,Yasir Demo Lab,Dark Chocolate,"yb2-flavor, Vegan, yb2-shell:dark, yb2-top:flakes, yb2-accent:coconut",TRUE,Title,Default Title,,,YB2-TOASTED-COCONUT-CREAM,12,,deny,manual,3.50,TRUE,TRUE,active
+chocolate-salted-peanut-butter,Salted Peanut Butter,<p>Smooth peanut butter centre with a pinch of flaky salt.</p>,Yasir Demo Lab,Milk Chocolate,"yb2-flavor, yb2-shell:milk, yb2-top:drizzle, yb2-accent:peanut",TRUE,Title,Default Title,,,YB2-SALTED-PEANUT-BUTTER,12,,deny,manual,3.50,TRUE,TRUE,active
+chocolate-orange-cardamom,Orange Cardamom,<p>Candied orange and warm cardamom in a dark chocolate shell.</p>,Yasir Demo Lab,Dark Chocolate,"yb2-flavor, Vegan, yb2-shell:dark, yb2-top:zest, yb2-accent:orange",TRUE,Title,Default Title,,,YB2-ORANGE-CARDAMOM,12,,deny,manual,3.50,TRUE,TRUE,active
+chocolate-honey-lavender,Honey Lavender,<p>Wildflower honey ganache with a soft lavender finish.</p>,Yasir Demo Lab,White Chocolate,"yb2-flavor, yb2-shell:white, yb2-top:drizzle, yb2-accent:lavender",TRUE,Title,Default Title,,,YB2-HONEY-LAVENDER,12,,deny,manual,3.50,TRUE,TRUE,active
+chocolate-cinnamon-churro,Cinnamon Churro,<p>Brown-butter caramel dusted with cinnamon sugar.</p>,Yasir Demo Lab,Milk Chocolate,"yb2-flavor, yb2-shell:milk, yb2-top:dust, yb2-accent:cinnamon",TRUE,Title,Default Title,,,YB2-CINNAMON-CHURRO,12,,deny,manual,3.50,TRUE,TRUE,active
+chocolate-mint-cacao-nib,Mint Cacao Nib,<p>Cool garden mint ganache scattered with roasted cacao nibs.</p>,Yasir Demo Lab,Dark Chocolate,"yb2-flavor, Vegan, Best Seller, yb2-shell:dark, yb2-top:nib, yb2-accent:mint",TRUE,Title,Default Title,,,YB2-MINT-CACAO-NIB,12,,deny,manual,3.50,TRUE,TRUE,active
+signature-chocolate-box,Signature Chocolate Box,"<p>Build your own box of handmade chocolates: choose a size, pick every flavour and finish it with a sleeve.</p>",Yasir Demo Lab,Chocolate Box,yb2-box,TRUE,Box size,6 Pieces,Sleeve,Classic Sleeve,YB2-BOX-6-CLASSIC,152,,deny,manual,18.00,TRUE,TRUE,active
+signature-chocolate-box,,,,,,,,6 Pieces,,Birthday Sleeve,YB2-BOX-6-BIRTHDAY,152,,deny,manual,21.00,TRUE,TRUE,
+signature-chocolate-box,,,,,,,,6 Pieces,,Holiday Sleeve,YB2-BOX-6-HOLIDAY,152,,deny,manual,22.00,TRUE,TRUE,
+signature-chocolate-box,,,,,,,,6 Pieces,,Premium Gift Sleeve,YB2-BOX-6-PREMIUM,152,,deny,manual,24.00,TRUE,TRUE,
+signature-chocolate-box,,,,,,,,12 Pieces,,Classic Sleeve,YB2-BOX-12-CLASSIC,224,,deny,manual,32.00,TRUE,TRUE,
+signature-chocolate-box,,,,,,,,12 Pieces,,Birthday Sleeve,YB2-BOX-12-BIRTHDAY,224,,deny,manual,35.00,TRUE,TRUE,
+signature-chocolate-box,,,,,,,,12 Pieces,,Holiday Sleeve,YB2-BOX-12-HOLIDAY,224,,deny,manual,36.00,TRUE,TRUE,
+signature-chocolate-box,,,,,,,,12 Pieces,,Premium Gift Sleeve,YB2-BOX-12-PREMIUM,224,,deny,manual,38.00,TRUE,TRUE,
+signature-chocolate-box,,,,,,,,16 Pieces,,Classic Sleeve,YB2-BOX-16-CLASSIC,272,,deny,manual,40.00,TRUE,TRUE,
+signature-chocolate-box,,,,,,,,16 Pieces,,Birthday Sleeve,YB2-BOX-16-BIRTHDAY,272,,deny,manual,43.00,TRUE,TRUE,
+signature-chocolate-box,,,,,,,,16 Pieces,,Holiday Sleeve,YB2-BOX-16-HOLIDAY,272,,deny,manual,44.00,TRUE,TRUE,
+signature-chocolate-box,,,,,,,,16 Pieces,,Premium Gift Sleeve,YB2-BOX-16-PREMIUM,272,,deny,manual,46.00,TRUE,TRUE,
+signature-chocolate-box,,,,,,,,24 Pieces,,Classic Sleeve,YB2-BOX-24-CLASSIC,368,,deny,manual,56.00,TRUE,TRUE,
+signature-chocolate-box,,,,,,,,24 Pieces,,Birthday Sleeve,YB2-BOX-24-BIRTHDAY,368,,deny,manual,59.00,TRUE,TRUE,
+signature-chocolate-box,,,,,,,,24 Pieces,,Holiday Sleeve,YB2-BOX-24-HOLIDAY,368,,deny,manual,60.00,TRUE,TRUE,
+signature-chocolate-box,,,,,,,,24 Pieces,,Premium Gift Sleeve,YB2-BOX-24-PREMIUM,368,,deny,manual,62.00,TRUE,TRUE,
