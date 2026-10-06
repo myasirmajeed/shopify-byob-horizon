@@ -43,6 +43,14 @@ sticky summary sidebar on desktop and sticky bottom bar with expandable box prev
 search that never touch selections; tray slots you can click to remove a piece; state restored after a
 refresh with a "Start over" option; focus moves to each step heading; one polite live region.
 
+**Images.** Flavor product photos and sleeve photos are free stock images from
+[Unsplash](https://unsplash.com/license) (free for commercial use; credit is courtesy):
+Rosemary Williams, Ilya Mashkov, Massimo Adami, Jana Ohajdova, Monika Grabkowska,
+amirali mirhashemian, Ediglecio Lêla, Tetiana Bykovets, Büşra Salkım, Ioana Enescu, Hannah Dodwell,
+Elena Leya (flavors); Wijdan Mq, Ekaterina Shevchenko, Anastasiia Chepinska, Shamblen Studios
+(sleeves). Sleeve images live in Shopify Files and are referenced from `templates/page.yb2.json`.
+Original SVG illustrations remain as the fallback when a flavor or sleeve has no image.
+
 **Limitations.** Flavor inventory isn't decremented (flavors are properties, not lines) — a
 production build would use a Cart Transform bundle function. Flavor products are also purchasable on
 their own. Only English strings are included.

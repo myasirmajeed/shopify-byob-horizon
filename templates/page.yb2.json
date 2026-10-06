@@ -5,35 +5,75 @@
       "blocks": {
         "size_6": {
           "type": "size",
-          "settings": { "option_value": "6 Pieces", "pieces": 6, "description": "A sweet little thank-you", "badge": "" }
+          "settings": {
+            "option_value": "6 Pieces",
+            "pieces": 6,
+            "description": "A sweet little thank-you",
+            "badge": ""
+          }
         },
         "size_12": {
           "type": "size",
-          "settings": { "option_value": "12 Pieces", "pieces": 12, "description": "Perfect for sharing", "badge": "Most popular" }
+          "settings": {
+            "option_value": "12 Pieces",
+            "pieces": 12,
+            "description": "Perfect for sharing",
+            "badge": "Most popular"
+          }
         },
         "size_16": {
           "type": "size",
-          "settings": { "option_value": "16 Pieces", "pieces": 16, "description": "A generous gift", "badge": "" }
+          "settings": {
+            "option_value": "16 Pieces",
+            "pieces": 16,
+            "description": "A generous gift",
+            "badge": ""
+          }
         },
         "size_24": {
           "type": "size",
-          "settings": { "option_value": "24 Pieces", "pieces": 24, "description": "For the true chocolate lover", "badge": "Best value" }
+          "settings": {
+            "option_value": "24 Pieces",
+            "pieces": 24,
+            "description": "For the true chocolate lover",
+            "badge": "Best value"
+          }
         },
         "sleeve_classic": {
           "type": "sleeve",
-          "settings": { "option_value": "Classic Sleeve", "description": "Cream linen with cocoa stripes", "pattern": "classic" }
+          "settings": {
+            "option_value": "Classic Sleeve",
+            "description": "Soft cream wrap with a blush satin ribbon",
+            "pattern": "classic",
+            "image": "shopify://shop_images/yb2-sleeve-classic.jpg"
+          }
         },
         "sleeve_birthday": {
           "type": "sleeve",
-          "settings": { "option_value": "Birthday Sleeve", "description": "Blush pink with hand-drawn confetti", "pattern": "birthday" }
+          "settings": {
+            "option_value": "Birthday Sleeve",
+            "description": "Bright pink wrap, gold ribbon and confetti",
+            "pattern": "birthday",
+            "image": "shopify://shop_images/yb2-sleeve-birthday.jpg"
+          }
         },
         "sleeve_holiday": {
           "type": "sleeve",
-          "settings": { "option_value": "Holiday Sleeve", "description": "Forest green with a gold star", "pattern": "holiday" }
+          "settings": {
+            "option_value": "Holiday Sleeve",
+            "description": "Crisp white wrap with a festive red bow",
+            "pattern": "holiday",
+            "image": "shopify://shop_images/yb2-sleeve-holiday.jpg"
+          }
         },
         "sleeve_premium": {
           "type": "sleeve",
-          "settings": { "option_value": "Premium Gift Sleeve", "description": "Matte black with gold foil frame", "pattern": "premium" }
+          "settings": {
+            "option_value": "Premium Gift Sleeve",
+            "description": "Midnight wrap finished with gold satin bows",
+            "pattern": "premium",
+            "image": "shopify://shop_images/yb2-sleeve-premium.jpg"
+          }
         }
       },
       "block_order": [
@@ -68,5 +108,7 @@
       }
     }
   },
-  "order": ["builder"]
+  "order": [
+    "builder"
+  ]
 }
