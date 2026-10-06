@@ -53,7 +53,7 @@
         {%- endfor -%}
       </select>
     {%- else -%}
-      <select class="visually-hidden" data-card-select tabindex="-1" aria-hidden="true">
+      <select data-card-select hidden>
         {%- render 'byob-variant-option', variant: current_variant, selected: current_variant -%}
       </select>
     {%- endif -%}

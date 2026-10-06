@@ -288,7 +288,7 @@ class ByobBuilderComponent extends Component {
     if (!option || option.disabled) return null;
 
     const productTitle = card.dataset.productTitle ?? '';
-    const isDefault = select.options.length === 1 && select.classList.contains('visually-hidden');
+    const isDefault = select.hidden;
     return {
       variantId: option.value,
       title: isDefault ? productTitle : `${productTitle} – ${option.dataset.title}`,
@@ -355,7 +355,8 @@ class ByobBuilderComponent extends Component {
     // Summary header + progress
     if (this.refs.sizeLabel) this.refs.sizeLabel.textContent = size ? `· ${size.title}` : '';
     if (this.refs.count) {
-      const template = count === 1 ? this.#strings.countOne : this.#strings.countOther;
+      // The noun follows the box capacity: "1 of 3 items", "2 of 1 item".
+      const template = max === 1 ? this.#strings.countOne : this.#strings.countOther;
       this.refs.count.textContent = fill(template, { count, max });
     }
     this.style.setProperty('--byob-progress', String(max ? Math.min(count / max, 1) : 0));

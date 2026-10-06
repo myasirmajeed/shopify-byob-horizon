@@ -677,6 +677,12 @@
       padding-block: 0;
     }
 
+    /* An expanded list must not cover the product grid behind the sticky bar. */
+    .byob__lines {
+      max-block-size: min(20vh, 132px);
+      margin-block-start: var(--gap-xs);
+    }
+
     .byob__totals-row:not(.byob__totals-row--total) {
       display: none;
     }
