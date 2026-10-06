@@ -6,6 +6,41 @@ This repo contains two independent BYOB demos on the Horizon theme:
 | --- | --- | --- |
 | **BYOB 2** — four-step chocolate box builder | `/pages/build-your-own-box-2` | `yb2-*` |
 | **BYOB 1** — single-page box builder | `/products/build-your-own-box` | `byob-*` |
+| **Product Personalizer** — custom gift box with live preview | `/pages/custom-gift-box` | `pz-*` |
+
+## Product Personalizer — custom gift box
+
+Customers design a gift box: **box style**, **color** (swatches), **size**, a **personal message**
+(live counter, character limit, unsupported-character check), **lettering** and **design** motif,
+**add-ons** and **quantity** — with an original SVG preview that updates instantly.
+
+**Honest pricing.** The product has three real options (Box style × Color × Size = 30 variants), so
+the box price is the variant price. Add-ons (Premium Ribbon $3, Gift Card $2, Premium Packaging $5)
+are real products added as extra cart lines at the same quantity. The displayed total
+`(variant + add-ons) × quantity` is therefore exactly what the cart charges.
+
+**Cart.** One `/cart/add.js` request adds the box and its add-ons. The box line carries
+`Personal message`, `Lettering`, `Design` and `Add-ons` properties (color/size show as variant
+options); add-on lines carry `Added to: Custom Gift Box (Rose / Large)`; every line shares a hidden
+`_pz_bundle` ID. Horizon's `CartLinesUpdateEvent` refreshes the drawer and cart count.
+
+**Validation.** Size must be chosen; message length and characters are checked live; quantity must be
+a whole number between 1 and the configured maximum. Errors appear inline and in a focused summary
+whose items jump to the field.
+
+| File | Responsibility |
+| --- | --- |
+| `assets/pz-model.js` | Pure logic: variant lookup, option availability, pricing, validation, cart items |
+| `assets/pz-preview.js` | Updates the SVG preview (data attributes, colours, text fitting) |
+| `assets/pz-cart.js` | AJAX Cart API + Horizon cart events |
+| `assets/pz-customizer.js` | `<pz-customizer-component>` controller, rendering and persistence |
+| `sections/pz-customizer.liquid` | Layout, design tokens, schema (product, add-ons, limits, swatch blocks) |
+| `snippets/pz-*.liquid` | Preview, options, message, add-ons, purchase panel, data, icons |
+| `templates/page.pz.json` | Page template with swatch colours and add-on products |
+| `data/pz-products.csv` | Recreates the gift box and add-on products (`node data/make-pz-products.js`) |
+
+**Limitations.** Add-ons are separate lines a customer could remove in the cart (a Cart Transform
+function could merge them into one bundle line). The design is a preview, not a print-proof.
 
 ## BYOB 2 — four-step chocolate box builder
 
