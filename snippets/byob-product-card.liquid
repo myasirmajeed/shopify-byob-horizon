@@ -1,0 +1,217 @@
+{% doc %}
+  Renders a selectable product card for the build-your-own-box builder, with an
+  optional variant select and a quantity stepper. Behavior is owned by the parent
+  `<byob-builder-component>`, which reads the `data-*` attributes.
+
+  @param {object} product - The product that can be packed into the box
+  @param {string} section_id - The owning section ID, used for unique element IDs
+
+  @example
+  {% render 'byob-product-card', product: item, section_id: section.id %}
+{% enddoc %}
+
+{% liquid
+  assign current_variant = product.selected_or_first_available_variant
+  assign has_variants = false
+  if product.has_only_default_variant == false
+    assign has_variants = true
+  endif
+  assign select_id = 'ByobVariant-' | append: section_id | append: '-' | append: product.id
+%}
+
+<article
+  class="byob-card{% unless product.available %} byob-card--sold-out{% endunless %}"
+  data-byob-card
+  data-product-title="{{ product.title | escape }}"
+>
+  <div class="byob-card__media">
+    {%- if product.featured_image -%}
+      {{
+        product.featured_image
+        | image_url: width: 600
+        | image_tag:
+          widths: '200, 300, 400, 600',
+          sizes: '(min-width: 990px) 20vw, (min-width: 750px) 30vw, 45vw',
+          loading: 'lazy',
+          class: 'byob-card__image',
+          alt: product.featured_image.alt
+      }}
+    {%- else -%}
+      {{ 'product-1' | placeholder_svg_tag: 'byob-card__image byob-card__image--placeholder' }}
+    {%- endif -%}
+    <span class="byob-card__badge" data-card-badge hidden></span>
+  </div>
+
+  <div class="byob-card__body">
+    <h3 class="byob-card__title">{{ product.title | escape }}</h3>
+
+    {%- if has_variants -%}
+      <label class="visually-hidden" for="{{ select_id }}">{{ 'byob.option' | t }}</label>
+      <select class="byob-card__select" id="{{ select_id }}" data-card-select on:change="/handleVariantChange">
+        {%- for variant in product.variants -%}
+          {%- render 'byob-variant-option', variant: variant, selected: current_variant -%}
+        {%- endfor -%}
+      </select>
+    {%- else -%}
+      <select class="visually-hidden" data-card-select tabindex="-1" aria-hidden="true">
+        {%- render 'byob-variant-option', variant: current_variant, selected: current_variant -%}
+      </select>
+    {%- endif -%}
+
+    <p class="byob-card__price" data-card-price>{{ current_variant.price | money }}</p>
+
+    {%- if product.available -%}
+      <div class="byob-card__stepper">
+        <button
+          type="button"
+          class="byob-card__step"
+          data-card-decrease
+          on:click="/decrease"
+          aria-label="{{ 'byob.decrease' | t: product: product.title | escape }}"
+          disabled
+        >
+          <span class="svg-wrapper" aria-hidden="true">{{- 'icon-minus.svg' | inline_asset_content -}}</span>
+        </button>
+        <output class="byob-card__qty" data-card-qty aria-live="off">0</output>
+        <button
+          type="button"
+          class="byob-card__step"
+          data-card-increase
+          on:click="/increase"
+          aria-label="{{ 'byob.increase' | t: product: product.title | escape }}"
+        >
+          <span class="svg-wrapper" aria-hidden="true">{{- 'icon-plus.svg' | inline_asset_content -}}</span>
+        </button>
+      </div>
+    {%- else -%}
+      <p class="byob-card__sold-out">{{ 'byob.sold_out' | t }}</p>
+    {%- endif -%}
+  </div>
+</article>
+
+{% stylesheet %}
+  .byob-card {
+    display: flex;
+    flex-direction: column;
+    inline-size: 100%;
+    min-width: 0;
+    border: 1px solid rgb(var(--color-foreground-rgb) / var(--opacity-15));
+    border-radius: var(--style-border-radius-md, 8px);
+    overflow: hidden;
+    transition: border-color var(--animation-speed-fast) var(--animation-easing),
+      box-shadow var(--animation-speed-fast) var(--animation-easing);
+  }
+
+  .byob-card[data-in-box] {
+    border-color: var(--color-primary-button-background);
+    box-shadow: inset 0 0 0 1px var(--color-primary-button-background);
+  }
+
+  .byob-card--sold-out {
+    opacity: 0.6;
+  }
+
+  .byob-card__media {
+    position: relative;
+    aspect-ratio: 1;
+    background: rgb(var(--color-foreground-rgb) / var(--opacity-5));
+  }
+
+  .byob-card__image {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .byob-card__badge {
+    position: absolute;
+    inset-block-start: var(--gap-xs);
+    inset-inline-end: var(--gap-xs);
+    padding: 2px 8px;
+    border-radius: var(--style-border-radius-pills, 999px);
+    background: var(--color-primary-button-background);
+    color: var(--color-primary-button-text);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .byob-card__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--gap-xs);
+    padding: var(--padding-sm);
+  }
+
+  .byob-card__title {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+
+  .byob-card__select {
+    inline-size: 100%;
+    min-block-size: 36px;
+    padding-inline: var(--padding-xs);
+    border: 1px solid var(--color-input-border, rgb(var(--color-foreground-rgb) / var(--opacity-20)));
+    border-radius: var(--style-border-radius-inputs, 4px);
+    background: var(--color-input-background, transparent);
+    color: var(--color-input-text, inherit);
+    font: inherit;
+    font-size: 0.8125rem;
+  }
+
+  .byob-card__price {
+    margin: 0;
+    font-size: 0.875rem;
+  }
+
+  .byob-card__stepper {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
+    align-items: center;
+    margin-block-start: auto;
+    border: 1px solid rgb(var(--color-foreground-rgb) / var(--opacity-20));
+    border-radius: var(--style-border-radius-inputs, 4px);
+  }
+
+  .byob-card__step {
+    display: grid;
+    place-items: center;
+    block-size: 40px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .byob-card__step svg {
+    inline-size: 12px;
+    block-size: 12px;
+  }
+
+  .byob-card__step:disabled {
+    cursor: not-allowed;
+    opacity: 0.3;
+  }
+
+  .byob-card__step:focus-visible {
+    outline: var(--focus-outline-width, 2px) solid var(--color-foreground);
+    outline-offset: -2px;
+  }
+
+  .byob-card__qty {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+
+  .byob-card__sold-out {
+    margin: auto 0 0;
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-70));
+    font-size: 0.875rem;
+  }
+{% endstylesheet %}

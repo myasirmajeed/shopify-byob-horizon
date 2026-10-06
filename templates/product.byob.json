@@ -1,0 +1,50 @@
+{
+  "sections": {
+    "main": {
+      "type": "byob-builder",
+      "blocks": {
+        "size_small": {
+          "type": "size",
+          "settings": {
+            "variant_title": "Small",
+            "min_items": 2,
+            "max_items": 3,
+            "description": "A taster box"
+          }
+        },
+        "size_medium": {
+          "type": "size",
+          "settings": {
+            "variant_title": "Medium",
+            "min_items": 4,
+            "max_items": 6,
+            "description": "Our most popular size"
+          }
+        },
+        "size_large": {
+          "type": "size",
+          "settings": {
+            "variant_title": "Large",
+            "min_items": 7,
+            "max_items": 9,
+            "description": "Stock up for the season"
+          }
+        }
+      },
+      "block_order": ["size_small", "size_medium", "size_large"],
+      "settings": {
+        "box_product": "",
+        "collection": "automated-collection",
+        "max_products": 24,
+        "heading": "",
+        "description": "<p>Pick a box size, then fill it with your favourite boards. Mix and match variants, and watch the price update as you go.</p>",
+        "default_min": 3,
+        "default_max": 6,
+        "background_color": "",
+        "padding-block-start": 32,
+        "padding-block-end": 48
+      }
+    }
+  },
+  "order": ["main"]
+}

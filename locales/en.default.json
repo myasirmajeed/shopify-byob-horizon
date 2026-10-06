@@ -371,5 +371,53 @@
       "default_title": "Default Title",
       "sticky_add_to_cart": "Quick add to cart bar"
     }
+  },
+  "byob": {
+    "step_size": "Choose your box",
+    "step_items": "Fill it up",
+    "size_range": "{{ min }}–{{ max }} items",
+    "size_exact": "{{ count }} items",
+    "summary_heading": "Your box",
+    "view_contents": "Box contents",
+    "empty": "Your box is empty. Pick items to get started.",
+    "box_fee": "Box",
+    "items_subtotal": "Items",
+    "total": "Total",
+    "add_to_cart": "Add box to cart",
+    "adding": "Adding…",
+    "added": "Box added to cart",
+    "sold_out": "Sold out",
+    "unavailable": "Unavailable",
+    "option": "Option",
+    "increase": "Add one {{ product }}",
+    "decrease": "Remove one {{ product }}",
+    "remove": "Remove {{ product }} from box",
+    "in_box": "In box",
+    "progress_label": "Box progress",
+    "status_need_more": {
+      "one": "Add 1 more item to complete your box",
+      "other": "Add {{ count }} more items to complete your box"
+    },
+    "status_ready_room": {
+      "one": "Ready! You can add 1 more item",
+      "other": "Ready! You can add {{ count }} more items"
+    },
+    "status_full": "Your box is full and ready to go",
+    "status_too_many": {
+      "one": "Remove 1 item to fit this box",
+      "other": "Remove {{ count }} items to fit this box"
+    },
+    "item_count": {
+      "one": "{{ count }} of {{ max }} item",
+      "other": "{{ count }} of {{ max }} items"
+    },
+    "box_unavailable": "This box size is sold out",
+    "error": "We couldn’t add your box. Please try again.",
+    "no_box_product": "Select a box product in the theme editor.",
+    "no_products": "Select a collection of products in the theme editor.",
+    "no_js": "Turn on JavaScript to build your box.",
+    "property_contents": "Contents",
+    "property_box": "Box",
+    "property_packed_in": "Packed in"
   }
 }

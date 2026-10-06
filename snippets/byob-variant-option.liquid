@@ -1,0 +1,37 @@
+{% doc %}
+  Renders one `<option>` for a build-your-own-box product card. The `data-stock`
+  attribute caps the quantity a shopper can pack when inventory is tracked and
+  overselling is not allowed.
+
+  @param {object} variant - The variant to render
+  @param {object} selected - The variant that should start selected
+
+  @example
+  {% render 'byob-variant-option', variant: variant, selected: current_variant %}
+{% enddoc %}
+
+{% liquid
+  assign stock = 999
+  if variant.inventory_management == 'shopify' and variant.inventory_policy == 'deny'
+    assign stock = variant.inventory_quantity | at_least: 0
+  endif
+  unless variant.available
+    assign stock = 0
+  endunless
+%}
+
+<option
+  value="{{ variant.id }}"
+  data-price="{{ variant.price }}"
+  data-stock="{{ stock }}"
+  data-title="{{ variant.title | escape }}"
+  {% if variant.id == selected.id %}
+    selected
+  {% endif %}
+  {% unless variant.available %}
+    disabled
+  {% endunless %}
+>
+  {{- variant.title | escape -}}
+  {%- unless variant.available %} — {{ 'byob.sold_out' | t }}{% endunless -%}
+</option>

@@ -1,0 +1,840 @@
+{% comment %}
+  Section contract.
+  Build-your-own-box builder. Each variant of the box product is a box size whose
+  price is the box fee; "Box size" blocks set the item limits per variant title.
+  Shoppers fill the box from a collection, and the whole box is added to the cart
+  in one AJAX request with a shared `_byob_id` line property.
+  @example
+  <!-- Assigned through templates/product.byob.json, or added to any page with a box product selected -->
+{% endcomment %}
+
+{% liquid
+  assign box_product = section.settings.box_product | default: product
+  assign pool = section.settings.collection
+  assign default_min = section.settings.default_min
+  assign default_max = section.settings.default_max
+  if default_max < default_min
+    assign default_max = default_min
+  endif
+
+  assign first_available_size = box_product.selected_or_first_available_variant
+
+  if section.settings.background_color != blank
+    render 'contrast-override', background_color: section.settings.background_color, section_id: section.id
+  endif
+%}
+
+<div
+  class="section-background{% if section.settings.background_color != blank %} color-custom-{{ section.id }}{% endif %}"
+></div>
+<div
+  class="section section--page-width spacing-style{% if section.settings.background_color != blank %} color-custom-{{ section.id }}{% endif %}"
+  style="{% render 'spacing-padding', settings: section.settings %}"
+>
+  {%- if box_product == blank -%}
+    <p class="byob__notice">{{ 'byob.no_box_product' | t }}</p>
+  {%- else -%}
+    <byob-builder-component
+      class="byob"
+      data-section-id="{{ section.id }}"
+      data-money-format="{{ shop.money_format | strip_html | escape }}"
+      data-currency="{{ cart.currency.iso_code }}"
+    >
+      <header class="byob__header">
+        {%- if section.settings.heading != blank -%}
+          <h1 class="byob__heading h2">{{ section.settings.heading | escape }}</h1>
+        {%- else -%}
+          <h1 class="byob__heading h2">{{ box_product.title | escape }}</h1>
+        {%- endif -%}
+        {%- if section.settings.description != blank -%}
+          <div class="byob__description rte">{{ section.settings.description }}</div>
+        {%- endif -%}
+      </header>
+
+      <noscript>
+        <p class="byob__notice">{{ 'byob.no_js' | t }}</p>
+      </noscript>
+
+      <div class="byob__layout">
+        <div class="byob__main">
+          <fieldset class="byob__step">
+            <legend class="byob__step-title h4">
+              <span class="byob__step-number" aria-hidden="true">1</span>
+              {{ 'byob.step_size' | t }}
+            </legend>
+
+            <div class="byob__sizes">
+              {%- for variant in box_product.variants -%}
+                {%- liquid
+                  assign size_block = null
+                  for block in section.blocks
+                    if block.settings.variant_title == variant.title
+                      assign size_block = block
+                      break
+                    endif
+                  endfor
+
+                  if size_block
+                    assign min_items = size_block.settings.min_items
+                    assign max_items = size_block.settings.max_items
+                    assign size_description = size_block.settings.description
+                  else
+                    assign min_items = default_min
+                    assign max_items = default_max
+                    assign size_description = blank
+                  endif
+                  if max_items < min_items
+                    assign max_items = min_items
+                  endif
+                  assign input_id = 'ByobSize-' | append: section.id | append: '-' | append: variant.id
+                -%}
+                <label
+                  class="byob__size{% unless variant.available %} byob__size--disabled{% endunless %}"
+                  for="{{ input_id }}"
+                  {% if size_block %}
+                    {{ size_block.shopify_attributes }}
+                  {% endif %}
+                >
+                  <input
+                    class="byob__size-input"
+                    type="radio"
+                    id="{{ input_id }}"
+                    name="byob-size-{{ section.id }}"
+                    value="{{ variant.id }}"
+                    data-title="{{ variant.title | escape }}"
+                    data-price="{{ variant.price }}"
+                    data-min="{{ min_items }}"
+                    data-max="{{ max_items }}"
+                    {% if variant.id == first_available_size.id and variant.available %}
+                      checked
+                    {% endif %}
+                    {% unless variant.available %}
+                      disabled
+                    {% endunless %}
+                    on:change="/handleSizeChange"
+                  >
+                  <span class="byob__size-name">{{ variant.title | escape }}</span>
+                  <span class="byob__size-limits">
+                    {%- if min_items == max_items -%}
+                      {{ 'byob.size_exact' | t: count: max_items }}
+                    {%- else -%}
+                      {{ 'byob.size_range' | t: min: min_items, max: max_items }}
+                    {%- endif -%}
+                  </span>
+                  {%- if size_description != blank -%}
+                    <span class="byob__size-description">{{ size_description | escape }}</span>
+                  {%- endif -%}
+                  <span class="byob__size-price">
+                    {%- if variant.available -%}
+                      + {{ variant.price | money }}
+                    {%- else -%}
+                      {{ 'byob.sold_out' | t }}
+                    {%- endif -%}
+                  </span>
+                </label>
+              {%- endfor -%}
+            </div>
+          </fieldset>
+
+          <section class="byob__step" aria-labelledby="ByobItemsTitle-{{ section.id }}">
+            <h2 class="byob__step-title h4" id="ByobItemsTitle-{{ section.id }}">
+              <span class="byob__step-number" aria-hidden="true">2</span>
+              {{ 'byob.step_items' | t }}
+            </h2>
+
+            {%- if pool == blank or pool.products_count == 0 -%}
+              <p class="byob__notice">{{ 'byob.no_products' | t }}</p>
+            {%- else -%}
+              <ul class="byob__grid" role="list">
+                {%- for item in pool.products limit: section.settings.max_products -%}
+                  {%- if item.id != box_product.id and item.gift_card? == false -%}
+                    <li class="byob__grid-item">
+                      {%- render 'byob-product-card', product: item, section_id: section.id -%}
+                    </li>
+                  {%- endif -%}
+                {%- endfor -%}
+              </ul>
+            {%- endif -%}
+          </section>
+        </div>
+
+        <aside class="byob__summary" aria-labelledby="ByobSummaryTitle-{{ section.id }}">
+          <div class="byob__summary-inner">
+            <div class="byob__summary-top">
+              <h2 class="byob__summary-title h5" id="ByobSummaryTitle-{{ section.id }}">
+                {{ 'byob.summary_heading' | t }}
+                <span class="byob__summary-size" ref="sizeLabel"></span>
+              </h2>
+              <span class="byob__count" ref="count"></span>
+            </div>
+
+            <div class="byob__progress" aria-hidden="true">
+              <span class="byob__progress-min" ref="progressMin"></span>
+              <span class="byob__progress-bar" ref="progressBar"></span>
+            </div>
+
+            <p class="byob__status" ref="status" role="status" aria-live="polite"></p>
+
+            <details class="byob__contents" ref="contents">
+              <summary class="byob__contents-toggle">
+                {{ 'byob.view_contents' | t }}
+                <span class="svg-wrapper" aria-hidden="true">{{- 'icon-caret.svg' | inline_asset_content -}}</span>
+              </summary>
+              <p class="byob__empty" ref="empty">{{ 'byob.empty' | t }}</p>
+              <ul class="byob__lines" ref="lines" role="list"></ul>
+            </details>
+
+            <dl class="byob__totals">
+              <div class="byob__totals-row">
+                <dt>{{ 'byob.box_fee' | t }}</dt>
+                <dd ref="boxFee"></dd>
+              </div>
+              <div class="byob__totals-row">
+                <dt>{{ 'byob.items_subtotal' | t }}</dt>
+                <dd ref="itemsTotal"></dd>
+              </div>
+              <div class="byob__totals-row byob__totals-row--total">
+                <dt>{{ 'byob.total' | t }}</dt>
+                <dd ref="total"></dd>
+              </div>
+            </dl>
+
+            <button
+              type="button"
+              class="button byob__submit"
+              ref="submit"
+              on:click="/addToCart"
+              disabled
+            >
+              <span ref="submitLabel">{{ 'byob.add_to_cart' | t }}</span>
+            </button>
+            <p class="byob__error" ref="error" role="alert" hidden></p>
+          </div>
+        </aside>
+      </div>
+
+      <template ref="lineTemplate">
+        <li class="byob__line">
+          <span class="byob__line-qty" data-line-qty></span>
+          <span class="byob__line-title" data-line-title></span>
+          <span class="byob__line-price" data-line-price></span>
+          <button type="button" class="button-unstyled byob__line-remove" data-line-remove on:click="/removeLine">
+            <span class="svg-wrapper" aria-hidden="true">{{- 'icon-close.svg' | inline_asset_content -}}</span>
+          </button>
+        </li>
+      </template>
+
+      <script type="application/json" ref="strings">
+        {
+          "needMoreOne": {{ 'byob.status_need_more.one' | t | json }},
+          "needMoreOther": {{ 'byob.status_need_more.other' | t: count: '[count]' | json }},
+          "readyRoomOne": {{ 'byob.status_ready_room.one' | t | json }},
+          "readyRoomOther": {{ 'byob.status_ready_room.other' | t: count: '[count]' | json }},
+          "full": {{ 'byob.status_full' | t | json }},
+          "tooManyOne": {{ 'byob.status_too_many.one' | t | json }},
+          "tooManyOther": {{ 'byob.status_too_many.other' | t: count: '[count]' | json }},
+          "countOne": {{ 'byob.item_count.one' | t: count: '[count]', max: '[max]' | json }},
+          "countOther": {{ 'byob.item_count.other' | t: count: '[count]', max: '[max]' | json }},
+          "boxUnavailable": {{ 'byob.box_unavailable' | t | json }},
+          "remove": {{ 'byob.remove' | t: product: '[product]' | json }},
+          "addToCart": {{ 'byob.add_to_cart' | t | json }},
+          "adding": {{ 'byob.adding' | t | json }},
+          "added": {{ 'byob.added' | t | json }},
+          "error": {{ 'byob.error' | t | json }},
+          "propertyContents": {{ 'byob.property_contents' | t | json }},
+          "propertyBox": {{ 'byob.property_box' | t | json }},
+          "propertyPackedIn": {{ 'byob.property_packed_in' | t | json }}
+        }
+      </script>
+    </byob-builder-component>
+
+    <script src="{{ 'byob-builder.js' | asset_url }}" type="module" fetchpriority="low"></script>
+  {%- endif -%}
+</div>
+
+{% stylesheet %}
+  .byob {
+    --byob-gap: var(--gap-xl);
+    --byob-radius: var(--style-border-radius-md, 8px);
+    --byob-border: rgb(var(--color-foreground-rgb) / var(--opacity-15));
+    --byob-muted: rgb(var(--color-foreground-rgb) / var(--opacity-70));
+    --byob-accent: var(--color-primary-button-background);
+
+    display: grid;
+    gap: var(--byob-gap);
+    min-width: 0;
+  }
+
+  .byob__header {
+    display: grid;
+    gap: var(--gap-sm);
+    max-width: 60ch;
+  }
+
+  .byob__heading {
+    margin: 0;
+  }
+
+  .byob__description > :last-child {
+    margin-block-end: 0;
+  }
+
+  .byob__notice {
+    padding: var(--padding-md);
+    border: 1px dashed var(--byob-border);
+    border-radius: var(--byob-radius);
+  }
+
+  .byob__layout {
+    display: grid;
+    gap: var(--byob-gap);
+    align-items: start;
+  }
+
+  @media screen and (min-width: 990px) {
+    .byob__layout {
+      grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+    }
+  }
+
+  .byob__main {
+    display: grid;
+    gap: var(--byob-gap);
+    min-width: 0;
+  }
+
+  .byob__step {
+    display: grid;
+    gap: var(--gap-md);
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .byob__step-title {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-sm);
+    margin: 0;
+    padding: 0;
+  }
+
+  .byob__step-number {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 1.75em;
+    block-size: 1.75em;
+    border-radius: 50%;
+    background: var(--byob-accent);
+    color: var(--color-primary-button-text);
+    font-size: 0.8em;
+  }
+
+  /* Box sizes */
+  .byob__sizes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--gap-sm);
+  }
+
+  .byob__size {
+    position: relative;
+    display: grid;
+    gap: var(--gap-3xs);
+    padding: var(--padding-md);
+    border: 1px solid var(--byob-border);
+    border-radius: var(--byob-radius);
+    cursor: pointer;
+    transition: border-color var(--animation-speed-fast) var(--animation-easing),
+      box-shadow var(--animation-speed-fast) var(--animation-easing);
+  }
+
+  .byob__size:hover {
+    border-color: var(--color-foreground);
+  }
+
+  .byob__size:has(:checked) {
+    border-color: var(--byob-accent);
+    box-shadow: inset 0 0 0 1px var(--byob-accent);
+  }
+
+  .byob__size:has(:focus-visible) {
+    outline: var(--focus-outline-width, 2px) solid var(--color-foreground);
+    outline-offset: var(--focus-outline-offset, 2px);
+  }
+
+  .byob__size--disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .byob__size-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    margin: 0;
+    cursor: inherit;
+  }
+
+  .byob__size-name {
+    font-weight: 600;
+  }
+
+  .byob__size-limits,
+  .byob__size-description,
+  .byob__size-price {
+    color: var(--byob-muted);
+    font-size: 0.875em;
+  }
+
+  /* Product grid */
+  .byob__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--gap-md);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media screen and (min-width: 750px) {
+    .byob__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .byob__grid-item {
+    display: flex;
+    min-width: 0;
+  }
+
+  /* Summary */
+  .byob__summary {
+    position: sticky;
+    inset-block-end: 0;
+    z-index: 2;
+    margin-inline: calc(-1 * var(--page-margin, 16px));
+  }
+
+  @media screen and (min-width: 990px) {
+    .byob__summary {
+      inset-block: calc(var(--header-height, 0px) + var(--gap-md)) auto;
+      margin-inline: 0;
+    }
+  }
+
+  .byob__summary-inner {
+    display: grid;
+    gap: var(--gap-sm);
+    padding: var(--padding-md) var(--page-margin, 16px);
+    background: var(--color-background);
+    border-block-start: 1px solid var(--byob-border);
+    box-shadow: 0 -8px 24px rgb(var(--color-foreground-rgb) / var(--opacity-8));
+  }
+
+  @media screen and (min-width: 990px) {
+    .byob__summary-inner {
+      gap: var(--gap-md);
+      padding: var(--padding-lg);
+      border: 1px solid var(--byob-border);
+      border-radius: var(--byob-radius);
+      box-shadow: none;
+    }
+  }
+
+  .byob__summary-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--gap-xs);
+  }
+
+  .byob__summary-title {
+    margin: 0;
+  }
+
+  .byob__summary-size,
+  .byob__count {
+    color: var(--byob-muted);
+    font-size: 0.875rem;
+    font-weight: normal;
+  }
+
+  .byob__progress {
+    position: relative;
+    block-size: 8px;
+    border-radius: 999px;
+    background: rgb(var(--color-foreground-rgb) / var(--opacity-10));
+    overflow: hidden;
+  }
+
+  .byob__progress-bar {
+    position: absolute;
+    inset: 0;
+    background: var(--byob-accent);
+    transform: scaleX(var(--byob-progress, 0));
+    transform-origin: left;
+    transition: transform var(--animation-speed-medium, 0.2s) var(--animation-easing),
+      background-color var(--animation-speed-fast) var(--animation-easing);
+  }
+
+  :dir(rtl) .byob__progress-bar {
+    transform-origin: right;
+  }
+
+  .byob[data-state='over'] .byob__progress-bar {
+    background: var(--color-error);
+  }
+
+  .byob__progress-min {
+    position: absolute;
+    z-index: 1;
+    inset-block: 0;
+    inset-inline-start: var(--byob-min-position, 0%);
+    inline-size: 2px;
+    background: var(--color-background);
+  }
+
+  .byob__status {
+    margin: 0;
+    font-size: 0.875rem;
+  }
+
+  .byob[data-state='ready'] .byob__status {
+    color: var(--color-success, inherit);
+  }
+
+  .byob[data-state='over'] .byob__status,
+  .byob__error {
+    color: var(--color-error);
+  }
+
+  .byob__error {
+    margin: 0;
+    font-size: 0.875rem;
+  }
+
+  .byob__contents-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-block: var(--padding-xs);
+    font-size: 0.875rem;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .byob__contents-toggle::-webkit-details-marker {
+    display: none;
+  }
+
+  .byob__contents-toggle .svg-wrapper,
+  .byob__contents-toggle svg {
+    inline-size: 12px;
+    transition: transform var(--animation-speed-fast) var(--animation-easing);
+  }
+
+  .byob__contents[open] .byob__contents-toggle svg {
+    transform: rotate(180deg);
+  }
+
+  .byob__empty {
+    margin: 0;
+    color: var(--byob-muted);
+    font-size: 0.875rem;
+  }
+
+  .byob__lines {
+    display: grid;
+    gap: var(--gap-xs);
+    max-block-size: 30vh;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+  }
+
+  @media screen and (min-width: 990px) {
+    .byob__lines {
+      max-block-size: 40vh;
+    }
+  }
+
+  .byob__line {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: var(--gap-xs);
+    font-size: 0.875rem;
+  }
+
+  .byob__line-qty {
+    font-weight: 600;
+  }
+
+  .byob__line-title {
+    overflow-wrap: anywhere;
+  }
+
+  .byob__line-remove {
+    display: grid;
+    place-items: center;
+    inline-size: 32px;
+    block-size: 32px;
+    color: var(--byob-muted);
+  }
+
+  .byob__line-remove svg {
+    inline-size: 12px;
+    block-size: 12px;
+  }
+
+  .byob__line-remove:hover {
+    color: var(--color-foreground);
+  }
+
+  .byob__totals {
+    display: grid;
+    gap: var(--gap-3xs);
+    margin: 0;
+    font-size: 0.875rem;
+  }
+
+  .byob__totals-row {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--gap-sm);
+  }
+
+  .byob__totals-row dt,
+  .byob__totals-row dd {
+    margin: 0;
+  }
+
+  .byob__totals-row--total {
+    padding-block-start: var(--padding-xs);
+    border-block-start: 1px solid var(--byob-border);
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .byob__submit {
+    inline-size: 100%;
+  }
+
+  .byob__submit:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  /* Mobile: keep the sticky bar compact so products stay visible. */
+  @media screen and (max-width: 989px) {
+    .byob__summary-inner {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+      grid-template-areas:
+        'top top'
+        'progress progress'
+        'status status'
+        'contents contents'
+        'totals submit'
+        'error error';
+      gap: var(--gap-xs) var(--gap-sm);
+      padding-block: var(--padding-sm);
+    }
+
+    .byob__summary-top {
+      grid-area: top;
+    }
+
+    .byob__progress {
+      grid-area: progress;
+    }
+
+    .byob__status {
+      grid-area: status;
+    }
+
+    .byob__contents {
+      grid-area: contents;
+    }
+
+    .byob__totals {
+      grid-area: totals;
+      align-self: center;
+    }
+
+    .byob__submit {
+      grid-area: submit;
+    }
+
+    .byob__error {
+      grid-area: error;
+    }
+
+    .byob__contents-toggle {
+      padding-block: 0;
+    }
+
+    .byob__totals-row:not(.byob__totals-row--total) {
+      display: none;
+    }
+
+    .byob__totals-row--total {
+      flex-direction: column;
+      gap: 0;
+      padding-block-start: 0;
+      border-block-start: 0;
+    }
+
+    .byob__totals-row--total dt {
+      color: var(--byob-muted);
+      font-size: 0.75rem;
+      font-weight: normal;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .byob__progress-bar,
+    .byob__size {
+      transition: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:byob.name",
+  "tag": "section",
+  "class": "byob-section",
+  "settings": [
+    {
+      "type": "product",
+      "id": "box_product",
+      "label": "t:byob.box_product",
+      "info": "t:byob.box_product_info"
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "t:byob.collection"
+    },
+    {
+      "type": "range",
+      "id": "max_products",
+      "label": "t:byob.max_products",
+      "min": 2,
+      "max": 48,
+      "step": 1,
+      "default": 24
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:byob.heading"
+    },
+    {
+      "type": "richtext",
+      "id": "description",
+      "label": "t:byob.description"
+    },
+    {
+      "type": "header",
+      "content": "t:byob.limits_header",
+      "info": "t:byob.limits_info"
+    },
+    {
+      "type": "range",
+      "id": "default_min",
+      "label": "t:byob.min_items",
+      "min": 1,
+      "max": 24,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "range",
+      "id": "default_max",
+      "label": "t:byob.max_items",
+      "min": 1,
+      "max": 24,
+      "step": 1,
+      "default": 6
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "t:settings.background_color",
+      "placeholder": "t:settings.default"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 32
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 32
+    }
+  ],
+  "blocks": [
+    {
+      "type": "size",
+      "name": "t:byob.size_block",
+      "settings": [
+        {
+          "type": "text",
+          "id": "variant_title",
+          "label": "t:byob.variant_title",
+          "info": "t:byob.variant_title_info"
+        },
+        {
+          "type": "range",
+          "id": "min_items",
+          "label": "t:byob.min_items",
+          "min": 1,
+          "max": 24,
+          "step": 1,
+          "default": 3
+        },
+        {
+          "type": "range",
+          "id": "max_items",
+          "label": "t:byob.max_items",
+          "min": 1,
+          "max": 24,
+          "step": 1,
+          "default": 6
+        },
+        {
+          "type": "text",
+          "id": "description",
+          "label": "t:byob.size_description"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:byob.name",
+      "category": "t:categories.products"
+    }
+  ]
+}
+{% endschema %}

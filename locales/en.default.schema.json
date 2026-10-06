@@ -1235,5 +1235,22 @@
     "when_will_order_arrive": "When will I get my order?",
     "where_are_products_made": "Where are your products manufactured?",
     "disclosures": "Disclosures"
+  },
+  "byob": {
+    "name": "Build your own box",
+    "size_block": "Box size",
+    "box_product": "Box product",
+    "box_product_info": "Each variant is a box size and its price is the box fee. Leave empty on a product template to use that product.",
+    "collection": "Products to choose from",
+    "max_products": "Maximum products shown",
+    "heading": "Heading",
+    "description": "Description",
+    "limits_header": "Default item limits",
+    "limits_info": "Used for any box size without a matching “Box size” block.",
+    "min_items": "Minimum items",
+    "max_items": "Maximum items",
+    "variant_title": "Variant title",
+    "variant_title_info": "Must match a box product variant exactly, for example “Small”.",
+    "size_description": "Short description"
   }
 }
