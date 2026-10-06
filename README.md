@@ -1,198 +1,210 @@
-# Build Your Own Box — Shopify Horizon customizations
+# Shopify Horizon Customizations — Portfolio
 
-This repo contains two independent BYOB demos on the Horizon theme:
+**Three production-style storefront features built on Shopify's Horizon theme (Online Store 2.0)** —
+written in Liquid, vanilla JavaScript (ES modules) and CSS, with no apps and no external libraries.
 
-| Demo | URL | Files |
+By **Yasir Majeed** · Shopify developer
+
+| Demo | What it shows | Live URL* |
 | --- | --- | --- |
-| **BYOB 2** — four-step chocolate box builder | `/pages/build-your-own-box-2` | `yb2-*` |
-| **BYOB 1** — single-page box builder | `/products/build-your-own-box` | `byob-*` |
-| **Product Personalizer** — custom gift box with live preview | `/pages/custom-gift-box` | `pz-*` |
+| [Product Personalizer](#1-product-personalizer) | Live SVG product preview, variant logic, add-on products, validation | `/pages/custom-gift-box` |
+| [Build Your Own Box — Chocolate](#2-build-your-own-box--four-step-chocolate-builder) | Four-step builder, state persistence, filters, honest pricing | `/pages/build-your-own-box-2` |
+| [Build Your Own Box — Classic](#3-build-your-own-box--single-page-builder) | Single-page bundle builder with min/max rules | `/products/build-your-own-box` |
 
-## Product Personalizer — custom gift box
-
-Customers design a gift box: **box style**, **color** (swatches), **size**, a **personal message**
-(live counter, character limit, unsupported-character check), **lettering** and **design** motif,
-**add-ons** and **quantity** — with an original SVG preview that updates instantly.
-
-**Honest pricing.** The product has three real options (Box style × Color × Size = 30 variants), so
-the box price is the variant price. Add-ons (Premium Ribbon $3, Gift Card $2, Premium Packaging $5)
-are real products added as extra cart lines at the same quantity. The displayed total
-`(variant + add-ons) × quantity` is therefore exactly what the cart charges.
-
-**Cart.** One `/cart/add.js` request adds the box and its add-ons. The box line carries
-`Personal message`, `Lettering`, `Design` and `Add-ons` properties (color/size show as variant
-options); add-on lines carry `Added to: Custom Gift Box (Rose / Large)`; every line shares a hidden
-`_pz_bundle` ID. Horizon's `CartLinesUpdateEvent` refreshes the drawer and cart count.
-
-**Validation.** Size must be chosen; message length and characters are checked live; quantity must be
-a whole number between 1 and the configured maximum. Errors appear inline and in a focused summary
-whose items jump to the field.
-
-| File | Responsibility |
-| --- | --- |
-| `assets/pz-model.js` | Pure logic: variant lookup, option availability, pricing, validation, cart items |
-| `assets/pz-preview.js` | Updates the SVG preview (data attributes, colours, text fitting) |
-| `assets/pz-cart.js` | AJAX Cart API + Horizon cart events |
-| `assets/pz-customizer.js` | `<pz-customizer-component>` controller, rendering and persistence |
-| `sections/pz-customizer.liquid` | Layout, design tokens, schema (product, add-ons, limits, swatch blocks) |
-| `snippets/pz-*.liquid` | Preview, options, message, add-ons, purchase panel, data, icons |
-| `templates/page.pz.json` | Page template with swatch colours and add-on products |
-| `data/pz-products.csv` | Recreates the gift box and add-on products (`node data/make-pz-products.js`) |
-
-**Limitations.** Add-ons are separate lines a customer could remove in the cart (a Cart Transform
-function could merge them into one bundle line). The design is a preview, not a print-proof.
-
-## BYOB 2 — four-step chocolate box builder
-
-Choose a box (6/12/16/24) → choose flavors → choose a sleeve → review → add to cart.
-
-**Data model.** The box product has two options, *Box size* × *Sleeve* (16 variants), and each
-variant's price is the full box price. The builder adds that variant, so the price shown is always
-the price Shopify charges — no front-end price manipulation. Flavors are products selected in a
-`product_list` setting (type = category; "Vegan" / "Best Seller" tags add filters; `yb2-shell:`,
-`yb2-top:`, `yb2-accent:` tags drive the original SVG illustrations).
-
-**Cart line.** One `/cart/add.js` call with properties `Total pieces`, `Flavor 1…n` (e.g.
-"Dark Sea Salt Caramel × 3") and a hidden `_yb2_config` JSON with product IDs for fulfilment.
-Horizon's `CartLinesUpdateEvent` refreshes the cart drawer and count.
-
-**Code layout.**
-
-| File | Responsibility |
-| --- | --- |
-| `assets/yb2-model.js` | Pure logic: variant lookup, pricing, step validation, restore sanitising, cart payload |
-| `assets/yb2-store.js` | Observable state with guarded localStorage persistence |
-| `assets/yb2-view.js` | DOM rendering for progress, counter, cards, tray, stats, review |
-| `assets/yb2-cart.js` | AJAX Cart API + Horizon cart events |
-| `assets/yb2-builder.js` | `<yb2-builder-component>` controller (Horizon `Component`) |
-| `sections/yb2-builder.liquid` | Section, design tokens, schema ("size" and "sleeve" blocks) |
-| `snippets/yb2-*.liquid` | One snippet per step, card, summary, art, icons and JSON data |
-| `templates/page.yb2.json` | Page template with sizes, sleeves and flavor list |
-
-Shared files touched (additive only): four `@theme/yb2-*` import-map entries in
-`snippets/scripts.liquid`, and a `yb2` namespace in the `en.default` locale files.
-
-**UX details.** Desktop step bar and mobile numbered markers (completed steps are clickable);
-sticky summary sidebar on desktop and sticky bottom bar with expandable box preview on mobile;
-"8 / 16 selected" counter with remaining count; capacity guard with a friendly message; filters and
-search that never touch selections; tray slots you can click to remove a piece; state restored after a
-refresh with a "Start over" option; focus moves to each step heading; one polite live region.
-
-**Demo data.** `data/yb2-products.csv` recreates the box product (16 variants) and the 12 flavor
-products via *Products → Import*. Then create a page with the `yb2` template. (`data/` is listed in
-`.shopifyignore`, so theme pushes skip it.)
-
-**Images.** Flavor product photos and sleeve photos are free stock images from
-[Unsplash](https://unsplash.com/license) (free for commercial use; credit is courtesy):
-Rosemary Williams, Ilya Mashkov, Massimo Adami, Jana Ohajdova, Monika Grabkowska,
-amirali mirhashemian, Ediglecio Lêla, Tetiana Bykovets, Büşra Salkım, Ioana Enescu, Hannah Dodwell,
-Elena Leya (flavors); Wijdan Mq, Ekaterina Shevchenko, Anastasiia Chepinska, Shamblen Studios
-(sleeves). Sleeve images live in Shopify Files and are referenced from `templates/page.yb2.json`.
-Original SVG illustrations remain as the fallback when a flavor or sleeve has no image.
-
-**Limitations.** Flavor inventory isn't decremented (flavors are properties, not lines) — a
-production build would use a Cart Transform bundle function. Flavor products are also purchasable on
-their own. Only English strings are included.
+\* Store: `yasir-demo-lab.myshopify.com` — a password-protected development store. The password is
+available on request.
 
 ---
 
-## BYOB 1 — single-page box builder
+## Contents
 
-A working **Build Your Own Box (BYOB)** experience built as a native Shopify Online Store 2.0
-customization on top of Shopify's [Horizon](https://themes.shopify.com/themes/horizon) theme (v4.2.0).
-No apps, no external libraries — Liquid, the theme's own component framework, and the AJAX Cart API.
+- [Tech stack](#tech-stack)
+- [1. Product Personalizer](#1-product-personalizer)
+- [2. Build Your Own Box — four-step chocolate builder](#2-build-your-own-box--four-step-chocolate-builder)
+- [3. Build Your Own Box — single-page builder](#3-build-your-own-box--single-page-builder)
+- [Engineering decisions](#engineering-decisions)
+- [Project structure](#project-structure)
+- [Running it yourself](#running-it-yourself)
+- [Testing](#testing)
+- [Limitations and next steps](#limitations-and-next-steps)
+- [Credits](#credits)
 
-Shoppers pick a box size, fill it with products, see live progress and pricing, and add the whole
-box to the cart in a single request. The box can't be added until it meets the size's item limits.
+---
 
-## Features
+## Tech stack
 
-- **Box sizes as product variants** — each variant of the box product is a size; its price is the box fee.
-- **Min / max item limits per size**, configured in the theme editor ("Box size" blocks).
-- **Product picker** from any collection, with variant selection and per-variant quantity steppers.
-- **Inventory aware** — steppers respect tracked stock; sold-out products and variants are disabled.
-- **Live progress bar and status** — "Add 2 more items", "Ready!", "Remove 1 item to fit this box".
-- **Dynamic pricing** — box fee + items subtotal = total, formatted with the shop's money format.
-- **Add-to-cart gating** — the button is disabled until the selection is valid.
-- **One AJAX request** (`/cart/add.js` with an `items` array) adds the box and its contents. Every line
-  shares a hidden `_byob_id` property; contents lines show "Packed in: Medium · BOX-XXXX" and the box
-  line lists its contents, so the grouping is visible in the cart and on the order.
-- **Integrates with Horizon's cart** — dispatches the standard `CartLinesUpdateEvent`, so the cart
-  drawer, cart count and cart page refresh exactly as with the theme's own add-to-cart.
-- **Responsive** — sticky sidebar summary on desktop, compact sticky bottom bar on mobile.
-- **Accessible** — native radio inputs for sizes, labelled steppers, a single polite live region for
-  status, visible focus states, reduced-motion support.
-- **Translatable** — all storefront and editor text lives in `locales/`.
+- **Shopify Online Store 2.0** — JSON templates, sections with blocks and settings, snippets with `{% doc %}` contracts
+- **Liquid** — server-rendered markup, variant and product data serialized to JSON for the client
+- **JavaScript** — native ES modules on Horizon's `Component` base class (`@theme/component`), import-map entries, no build step
+- **Shopify AJAX Cart API** — `/cart/add.js` with multi-item payloads and line-item properties
+- **Horizon cart events** — `CartLinesUpdateEvent` / `CartErrorEvent` so the cart drawer and cart count stay in sync
+- **CSS** — scoped `{% stylesheet %}` per component, custom properties, logical properties, `:has()`, `color-mix()`, reduced-motion support
+- **Tooling** — Shopify CLI (theme pull/push), Theme Check, Git
 
-## Files added
+---
 
-| File | Purpose |
-| --- | --- |
-| `sections/byob-builder.liquid` | Section markup, scoped CSS (`{% stylesheet %}`), schema with settings and "Box size" blocks |
-| `snippets/byob-product-card.liquid` | Selectable product card with variant select and quantity stepper |
-| `snippets/byob-variant-option.liquid` | Variant `<option>` carrying price and stock data |
-| `assets/byob-builder.js` | `<byob-builder-component>` — state, rendering, validation and cart request |
-| `templates/product.byob.json` | Product template that renders the builder with three preset sizes |
-| `locales/en.default.json`, `locales/en.default.schema.json` | `byob` translation keys (appended) |
+## 1. Product Personalizer
 
-No existing Horizon files were modified apart from appending the `byob` locale namespaces.
+A customer designs a gift box and sees it update instantly.
 
-## How it works
+<p>
+  <img src="docs/screenshots/personalizer-desktop.jpg" alt="Product Personalizer on desktop: live gift box preview beside the options" width="68%">
+  <img src="docs/screenshots/personalizer-mobile.jpg" alt="Product Personalizer on mobile with a sticky total and Add to cart bar" width="28%">
+</p>
+
+**Features**
+- **Box style, color and size** as real Shopify variants (2 × 5 × 3 = 30). Color swatches show a tick and a bold label, so selection is never communicated by color alone.
+- **Personal message** with a live counter, character limit and an unsupported-character check (emoji are rejected because they can't be printed). The text appears on the box lid as you type and auto-shrinks to fit.
+- **Lettering** (script, serif, modern) and **design motifs** (hearts, stars, floral).
+- **Add-ons** — Premium Ribbon, Gift Card, Premium Packaging — that also appear in the preview.
+- **Quantity** stepper with min/max guards; invalid input is explained, never silently changed.
+- **Live price breakdown**: box + add-ons = per box × quantity = total.
+- **Validation summary** on Add to cart; each error links to its field.
+- Design is **saved in localStorage** and restored after a refresh.
+
+**How the cart works**
+One `/cart/add.js` request adds the box variant plus one line per add-on, all at the same quantity.
+The box line stores `Personal message`, `Lettering`, `Design` and `Add-ons` as line-item properties; add-on
+lines store `Added to: Custom Gift Box (Rose / Large)`; every line shares a hidden `_pz_bundle` ID.
+
+<img src="docs/screenshots/personalizer-cart.jpg" alt="Cart page showing the personalized gift box with its message, lettering, design and linked add-on lines" width="68%">
+
+---
+
+## 2. Build Your Own Box — four-step chocolate builder
+
+Choose a box → choose flavors → choose a sleeve → review → add to cart.
+
+<p>
+  <img src="docs/screenshots/byob2-flavors-desktop.jpg" alt="Chocolate box builder, flavor step on desktop with sticky summary and box tray" width="68%">
+  <img src="docs/screenshots/byob2-mobile.jpg" alt="Chocolate box builder on mobile with compact step markers and sticky bottom bar" width="28%">
+</p>
+
+**Features**
+- Four-step flow with a desktop step bar and compact mobile markers; completed steps are clickable.
+- Box sizes 6 / 12 / 16 / 24 with a visual layout of the pieces.
+- Flavor grid with **category filters** and **search** that never touch the selection.
+- "8 / 16 selected" counter, remaining count, capacity guard with a friendly message.
+- **Box tray preview** — one slot per piece, showing the flavor photo; click a piece to remove it.
+- Sleeve step with surcharges shown relative to the chosen size ("Included", "+$4.00").
+- Review step with Edit buttons that jump back without losing anything.
+- State **persisted to localStorage**, validated against the catalog on reload, with a "Start over" option.
+
+**How the cart works**
+The box product has two options — *Box size* × *Sleeve* (16 variants) — and each variant's price is the full box
+price. The builder adds that variant, so the displayed price is exactly what Shopify charges. Flavors are
+stored as line-item properties (`Total pieces`, `Flavor 1: Dark Sea Salt Caramel × 3`, …) plus a hidden
+`_yb2_config` JSON with product IDs for fulfilment.
+
+<img src="docs/screenshots/byob2-review.jpg" alt="Review step listing box size, flavors with photos, sleeve and price breakdown" width="68%">
+
+---
+
+## 3. Build Your Own Box — single-page builder
+
+<img src="docs/screenshots/byob1-desktop.jpg" alt="Single-page box builder with box sizes, product grid and summary sidebar" width="68%">
+
+- Box sizes as product variants; per-size minimum and maximum item counts configured in theme-editor blocks.
+- Product cards with variant selects and quantity steppers that respect tracked inventory.
+- Live progress bar, status message and price (box fee + items).
+- Add to cart is disabled until the selection is valid; one request adds the box and every item, linked by a shared `_byob_id`.
+
+---
+
+## Engineering decisions
+
+**Honest pricing.** A theme cannot change a product's price, so every demo models price with real data: variants
+(box size × sleeve, style × color × size) and add-on products added as linked cart lines. The number shown on
+the page is always the number in the cart — no front-end-only prices.
+
+**Isolation.** Each feature has its own namespace (`byob-`, `yb2-`, `pz-`) across sections, snippets, CSS classes,
+custom elements, data attributes, localStorage keys and locale keys. Shared theme files are only touched
+additively (import-map entries in `snippets/scripts.liquid`, new namespaces in `locales/en.default*.json`).
+
+**Modular JavaScript.** Logic is split into small modules — a pure *model* (pricing, validation, cart payload),
+a *view* or *preview* renderer, a *cart* module and a thin *controller* component — loaded through Horizon's
+import map, with no bundler.
+
+**Theme-native integration.** Components extend Horizon's `Component` class and use its `ref` / `on:` attribute
+conventions; cart updates dispatch Horizon's standard events so the drawer, cart count and cart page refresh
+like the theme's own add-to-cart.
+
+**Merchant-editable.** Products, collections, sizes, sleeves, swatch colors, limits and copy are section/block
+settings, editable in the theme editor without code. All storefront text lives in locale files.
+
+**Accessibility.** Native radio, checkbox and button controls; visible focus states; labelled steppers; one polite
+live region per feature; focus moves to the new step heading or to the error summary; touch targets of at
+least 44px; reduced-motion support.
+
+**Performance.** No dependencies; lazy-loaded responsive images; DOM updates only where state changed;
+debounced search; requests aborted when components disconnect.
+
+---
+
+## Project structure
 
 ```
-Liquid (server)                         JavaScript (client)
-────────────────────────────────        ─────────────────────────────────────────
-box product variants  → size radios     handleSizeChange   → read min/max/fee
-"Box size" blocks     → data-min/max    increase/decrease  → update Map<variantId, line>
-collection products   → product cards   #render()          → progress, status, totals,
-variant price/stock   → data-* attrs                          card states, button state
-                                        addToCart()        → POST /cart/add.js (items[])
-                                                           → CartLinesUpdateEvent → drawer/count
+assets/
+  pz-model.js  pz-preview.js  pz-cart.js  pz-customizer.js     # Product Personalizer
+  yb2-model.js yb2-store.js   yb2-view.js yb2-cart.js yb2-builder.js   # BYOB 2
+  byob-builder.js                                              # BYOB 1
+sections/
+  pz-customizer.liquid  yb2-builder.liquid  byob-builder.liquid
+snippets/
+  pz-*.liquid  yb2-*.liquid  byob-*.liquid
+templates/
+  page.pz.json  page.yb2.json  product.byob.json
+data/
+  pz-products.csv  yb2-products.csv  make-pz-products.js  add-pz-locales.js
+docs/screenshots/                                              # images in this README
 ```
 
-- Initial UI is rendered in Liquid; JavaScript only owns interaction state.
-- The component extends Horizon's `Component` class (`@theme/component`), using `ref`/`on:` attributes
-  for element references and declarative event handling.
-- Pricing is computed in minor units (cents) and formatted with Horizon's `formatMoney`.
-- A request is guarded against double submission and can be aborted if the element disconnects.
+Everything else is the stock Horizon 4.2.0 theme (first commit), kept so the repo is a complete, pushable theme.
 
-## Setup
+---
 
-1. Create a product (e.g. "Build Your Own Box") with one option, **Box size**, and variants such as
-   `Small`, `Medium`, `Large`. Set each variant's price to the box fee. Inventory tracking off.
-2. Push the theme:
+## Running it yourself
+
+1. **Push the theme** with Shopify CLI:
    ```bash
-   shopify theme push --store <your-store>.myshopify.com
+   shopify theme push --store <your-store>.myshopify.com --unpublished
    ```
-3. In the product admin, set **Theme template** to `byob`.
-4. In the theme editor, open the template and adjust the collection, heading and the "Box size" blocks.
-   Each block's *Variant title* must match a variant title exactly.
+2. **Import the demo products** from *Products → Import*:
+   `data/yb2-products.csv` (chocolate box + 12 flavors) and `data/pz-products.csv` (gift box + 3 add-ons).
+3. **Create the pages** and assign their templates: `pz` → `/pages/custom-gift-box`, `yb2` →
+   `/pages/build-your-own-box-2`. For BYOB 1, set a box product's theme template to `byob`.
+4. Adjust products, limits and copy in the theme editor.
 
-The section can also be added to any page; select a box product in its settings.
+`data/` and `docs/` are listed in `.shopifyignore`, so theme pushes skip them.
 
-## Testing performed
+---
 
-Tested on the live development store (desktop 1280px and mobile 375px):
+## Testing
 
-- Below minimum → button disabled with "Add N more" message
-- Reaching minimum enables the button; at maximum every "+" is disabled
-- Switching to a smaller size with too many items → over-limit state, red progress, button disabled
-- Removing items from the card stepper and from the summary list
-- Multi-variant product: separate lines per variant, product badge shows combined quantity
-- Totals verified manually against item prices + box fee
-- Add to cart: 6 lines added in one request, shared `_byob_id`, cart total equals builder total,
-  cart count refreshed, cart page shows "Packed in" / "Contents" properties
-- Theme Check: no offenses in the added files
+Each feature was tested end to end on the live development store, on desktop and at 375px mobile width:
+option changes, validation edge cases (empty, over-limit, invalid characters, invalid quantities), capacity rules,
+filters and search, refresh persistence, add to cart, cart line properties, cart-page display and console errors.
+In every case the price shown on the page matched the cart total. Theme Check reports no offenses in the
+added files.
 
-## Known limitations / next steps
+---
 
-- Lines can be edited individually in the cart after adding. A production build would enforce the
-  bundle server-side with a **Cart Transform** or **Cart and Checkout Validation** Shopify Function.
-- Box pricing is box fee + item prices; tiered box discounts would be implemented with an automatic
-  discount (Discount Function) rather than in theme code.
-- Only English strings are provided; other locales fall back to English.
+## Limitations and next steps
+
+- Bundle lines (box items, add-ons) can be edited individually in the cart. A **Cart Transform** Shopify Function
+  would merge them into a single bundle line; **Cart and Checkout Validation** could enforce the rules server-side.
+- Flavor inventory isn't decremented in BYOB 2 because flavors are stored as properties.
+- The personalizer preview is an illustration, not a print proof.
+- Only English strings are included; other locales fall back to English.
+
+---
 
 ## Credits
 
-Base theme: Horizon © Shopify. The BYOB feature (files listed above) was written specifically for this
-demo store.
+- Base theme: **Horizon** by Shopify (first commit is the unmodified theme). All feature code listed above was
+  written for this portfolio.
+- Chocolate and sleeve photos: free images from [Unsplash](https://unsplash.com/license) by Rosemary Williams,
+  Ilya Mashkov, Massimo Adami, Jana Ohajdova, Monika Grabkowska, amirali mirhashemian, Ediglecio Lêla,
+  Tetiana Bykovets, Büşra Salkım, Ioana Enescu, Hannah Dodwell, Elena Leya, Wijdan Mq, Ekaterina Shevchenko,
+  Anastasiia Chepinska and Shamblen Studios.
+- Gift box preview, truffle and sleeve illustrations: original SVG artwork.
