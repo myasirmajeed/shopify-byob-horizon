@@ -1,0 +1,370 @@
+{% doc %}
+  Renders one selectable flavor card for the BYOB 2 builder. Category comes from
+  the product type; the tags "Vegan" and "Best Seller" add filter categories, and
+  `yb2-shell:`, `yb2-top:` and `yb2-accent:` tags drive the fallback illustration.
+
+  @param {object} product - The flavor product
+  @param {string} section_id - The owning section ID, for unique element IDs
+
+  @example
+  {% render 'yb2-flavor-card', product: flavor, section_id: section.id %}
+{% enddoc %}
+
+{%- liquid
+  assign shell = 'dark'
+  assign top = 'dust'
+  assign accent = 'caramel'
+  assign categories = product.type | handleize
+  assign is_best_seller = false
+  for tag in product.tags
+    if tag contains 'yb2-shell:'
+      assign shell = tag | remove: 'yb2-shell:'
+    elsif tag contains 'yb2-top:'
+      assign top = tag | remove: 'yb2-top:'
+    elsif tag contains 'yb2-accent:'
+      assign accent = tag | remove: 'yb2-accent:'
+    elsif tag == 'Vegan'
+      assign categories = categories | append: ' vegan'
+    elsif tag == 'Best Seller'
+      assign categories = categories | append: ' best-seller'
+      assign is_best_seller = true
+    endif
+  endfor
+  assign title_id = 'Yb2Flavor-' | append: section_id | append: '-' | append: product.id
+  assign search_text = product.title | append: ' ' | append: product.type | downcase
+-%}
+
+<li
+  class="yb2-grid__item"
+  data-flavor-item="{{ product.id }}"
+  data-categories="{{ categories }}"
+  data-search="{{ search_text | escape }}"
+>
+  <article
+    class="yb2-flavor{% unless product.available %} yb2-flavor--unavailable{% endunless %}"
+    data-flavor-card="{{ product.id }}"
+    data-shell="{{ shell | escape }}"
+    data-accent="{{ accent | escape }}"
+    aria-labelledby="{{ title_id }}"
+  >
+    <div class="yb2-flavor__media">
+      {%- if product.featured_image -%}
+        {{
+          product.featured_image
+          | image_url: width: 480
+          | image_tag:
+            widths: '200, 320, 480',
+            sizes: '(min-width: 990px) 18vw, (min-width: 750px) 28vw, 44vw',
+            loading: 'lazy',
+            class: 'yb2-flavor__image',
+            alt: product.featured_image.alt
+        }}
+      {%- else -%}
+        {%- render 'yb2-flavor-art', shell: shell, top: top, accent: accent -%}
+      {%- endif -%}
+      {%- if is_best_seller -%}
+        <span class="yb2-flavor__tag">{{ 'yb2.best_seller' | t }}</span>
+      {%- endif -%}
+      <span class="yb2-flavor__selected" data-selected-badge hidden>
+        {%- render 'yb2-icon', name: 'check' -%}
+        <span data-selected-count></span>
+      </span>
+    </div>
+
+    <div class="yb2-flavor__body">
+      <p class="yb2-flavor__category">{{ product.type | escape }}</p>
+      <h3 class="yb2-flavor__title" id="{{ title_id }}">{{ product.title | escape }}</h3>
+      {%- if product.description != blank -%}
+        <p class="yb2-flavor__description">{{ product.description | strip_html | truncatewords: 14 }}</p>
+      {%- endif -%}
+
+      <div class="yb2-flavor__actions">
+        {%- if product.available -%}
+          <button
+            type="button"
+            class="yb2-flavor__add"
+            data-flavor-id="{{ product.id }}"
+            data-add-button
+            on:click="/addFlavor"
+            aria-label="{{ 'yb2.add_one' | t: flavor: product.title | escape }}"
+          >
+            {%- render 'yb2-icon', name: 'plus' -%}
+            <span>{{ 'yb2.add' | t }}</span>
+          </button>
+          <div
+            class="yb2-qty"
+            role="group"
+            data-qty-group
+            aria-label="{{ product.title | escape }}"
+            hidden
+          >
+            <button
+              type="button"
+              class="yb2-qty__button"
+              data-flavor-id="{{ product.id }}"
+              on:click="/removeFlavor"
+              aria-label="{{ 'yb2.remove_one' | t: flavor: product.title | escape }}"
+            >
+              {%- render 'yb2-icon', name: 'minus' -%}
+            </button>
+            <span class="yb2-qty__value" data-qty-value>0</span>
+            <button
+              type="button"
+              class="yb2-qty__button"
+              data-flavor-id="{{ product.id }}"
+              data-increase
+              on:click="/addFlavor"
+              aria-label="{{ 'yb2.add_one' | t: flavor: product.title | escape }}"
+            >
+              {%- render 'yb2-icon', name: 'plus' -%}
+            </button>
+          </div>
+        {%- else -%}
+          <p class="yb2-flavor__soldout">{{ 'products.product.sold_out' | t }}</p>
+        {%- endif -%}
+      </div>
+    </div>
+  </article>
+</li>
+
+{% stylesheet %}
+  .yb2-grid__item {
+    display: flex;
+    min-width: 0;
+  }
+
+  .yb2-grid__item[hidden] {
+    display: none;
+  }
+
+  .yb2-flavor {
+    display: flex;
+    flex-direction: column;
+    inline-size: 100%;
+    overflow: hidden;
+    border: 1px solid var(--yb2-line);
+    border-radius: var(--yb2-radius);
+    background: var(--yb2-paper);
+    box-shadow: var(--yb2-shadow);
+    transition: border-color 160ms var(--yb2-ease), box-shadow 160ms var(--yb2-ease), transform 160ms var(--yb2-ease);
+  }
+
+  .yb2-flavor:hover {
+    box-shadow: var(--yb2-shadow-lift);
+    transform: translateY(-2px);
+  }
+
+  .yb2-flavor[data-selected] {
+    border-color: var(--yb2-accent);
+    box-shadow: 0 0 0 1px var(--yb2-accent), var(--yb2-shadow-lift);
+  }
+
+  .yb2-flavor--unavailable {
+    opacity: 0.55;
+  }
+
+  .yb2-flavor__media {
+    position: relative;
+    aspect-ratio: 1;
+    padding: 14%;
+    background: radial-gradient(circle at 50% 40%, var(--yb2-paper), var(--yb2-sand));
+  }
+
+  .yb2-flavor__image {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .yb2-flavor__media .yb2-art {
+    transition: transform 240ms var(--yb2-ease);
+  }
+
+  .yb2-flavor:hover .yb2-art {
+    transform: scale(1.04) rotate(-2deg);
+  }
+
+  .yb2-flavor__tag {
+    position: absolute;
+    inset-block-start: 10px;
+    inset-inline-start: 10px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--yb2-paper);
+    color: var(--yb2-gold);
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    box-shadow: var(--yb2-shadow);
+  }
+
+  .yb2-flavor__selected {
+    position: absolute;
+    inset-block-start: 10px;
+    inset-inline-end: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px 4px 8px;
+    border-radius: 999px;
+    background: var(--yb2-accent);
+    color: var(--yb2-accent-ink);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    animation: yb2-pop 220ms var(--yb2-ease);
+  }
+
+  .yb2-flavor__selected[hidden] {
+    display: none;
+  }
+
+  .yb2-flavor__selected svg {
+    inline-size: 12px;
+    block-size: 12px;
+  }
+
+  .yb2-flavor__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px;
+  }
+
+  .yb2-flavor__category {
+    margin: 0;
+    color: var(--yb2-accent);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .yb2-flavor__title {
+    margin: 0;
+    font-family: var(--yb2-serif);
+    font-size: 1.0625rem;
+    font-weight: 500;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+
+  .yb2-flavor__description {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    color: var(--yb2-ink-soft);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .yb2-flavor__actions {
+    margin-block-start: auto;
+    padding-block-start: 10px;
+  }
+
+  .yb2-flavor__add,
+  .yb2-qty {
+    inline-size: 100%;
+    min-block-size: 44px;
+    border-radius: 999px;
+  }
+
+  .yb2-flavor__add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px solid var(--yb2-ink);
+    background: var(--yb2-paper);
+    color: var(--yb2-ink);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 160ms var(--yb2-ease), color 160ms var(--yb2-ease);
+  }
+
+  .yb2-flavor__add:hover {
+    background: var(--yb2-ink);
+    color: var(--yb2-paper);
+  }
+
+  .yb2-flavor__add svg,
+  .yb2-qty__button svg {
+    inline-size: 14px;
+    block-size: 14px;
+  }
+
+  .yb2-flavor__add[hidden],
+  .yb2-qty[hidden] {
+    display: none;
+  }
+
+  .yb2-qty {
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+    align-items: center;
+    background: var(--yb2-ink);
+    color: var(--yb2-paper);
+  }
+
+  .yb2-qty__button {
+    display: grid;
+    place-items: center;
+    block-size: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .yb2-qty__button:hover {
+    background: rgb(255 255 255 / 0.12);
+  }
+
+  .yb2-qty__button[aria-disabled='true'] {
+    opacity: 0.4;
+  }
+
+  .yb2-qty__value {
+    text-align: center;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .yb2-flavor__soldout {
+    margin: 0;
+    color: var(--yb2-ink-soft);
+    font-size: 0.875rem;
+  }
+
+  @keyframes yb2-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.7);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .yb2-flavor,
+    .yb2-flavor__media .yb2-art,
+    .yb2-flavor__selected {
+      animation: none;
+      transition: none;
+    }
+
+    .yb2-flavor:hover,
+    .yb2-flavor:hover .yb2-art {
+      transform: none;
+    }
+  }
+{% endstylesheet %}

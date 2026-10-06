@@ -1252,5 +1252,30 @@
     "variant_title": "Variant title",
     "variant_title_info": "Must match a box product variant exactly, for example “Small”.",
     "size_description": "Short description"
+  },
+  "yb2": {
+    "name": "Build your own box 2",
+    "box_product": "Box product",
+    "box_product_info": "Needs two options: box size first, sleeve second. Each variant price is the full box price.",
+    "flavors": "Flavor products",
+    "flavors_info": "Product type is used as the category. The tags “Vegan” and “Best Seller” add extra filters.",
+    "heading": "Heading",
+    "intro": "Introduction",
+    "show_search": "Show search",
+    "size_block": "Box size",
+    "sleeve_block": "Sleeve",
+    "option_value": "Option value",
+    "option_value_info": "Must match the box product option value exactly.",
+    "pieces": "Pieces",
+    "label": "Label",
+    "description": "Description",
+    "badge": "Badge",
+    "pattern": "Sleeve pattern",
+    "pattern_classic": "Classic stripes",
+    "pattern_birthday": "Birthday confetti",
+    "pattern_holiday": "Holiday stars",
+    "pattern_premium": "Premium foil",
+    "image": "Image",
+    "image_info": "Optional. Replaces the illustrated pattern."
   }
 }

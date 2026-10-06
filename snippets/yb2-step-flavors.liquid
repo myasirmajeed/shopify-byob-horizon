@@ -1,0 +1,327 @@
+{% doc %}
+  Step 2 of the BYOB 2 builder: flavor selection with a live counter, category
+  filters and search. Filters are built from the flavors' product types plus the
+  "Vegan" and "Best Seller" tags. Filtering only hides cards, so selections are kept.
+
+  @param {object} flavors - Product list of flavor products
+  @param {object} section - The owning section, for settings and unique IDs
+
+  @example
+  {% render 'yb2-step-flavors', flavors: section.settings.flavors, section: section %}
+{% enddoc %}
+
+{%- liquid
+  assign types = ''
+  assign has_vegan = false
+  assign has_best_sellers = false
+  for flavor in flavors
+    assign type_handle = flavor.type | handleize
+    assign needle = '|' | append: type_handle | append: '|'
+    if flavor.type != blank
+      unless types contains needle
+        assign types = types | append: needle | append: flavor.type | append: '~'
+      endunless
+    endif
+    if flavor.tags contains 'Vegan'
+      assign has_vegan = true
+    endif
+    if flavor.tags contains 'Best Seller'
+      assign has_best_sellers = true
+    endif
+  endfor
+  assign type_entries = types | split: '~'
+-%}
+
+<section
+  class="yb2-step"
+  data-step-panel="flavors"
+  ref="stepPanels[]"
+  aria-labelledby="Yb2Title-flavors-{{ section.id }}"
+  hidden
+>
+  <div class="yb2-step__header">
+    <h2 class="yb2-step__title" id="Yb2Title-flavors-{{ section.id }}" tabindex="-1">{{ 'yb2.steps.flavors' | t }}</h2>
+    <p class="yb2-step__intro">{{ 'yb2.step_intros.flavors' | t }}</p>
+  </div>
+
+  <div class="yb2-counter" data-counter-state="under">
+    <div class="yb2-counter__numbers">
+      <p class="yb2-counter__value" ref="counterValue"></p>
+      <p class="yb2-counter__remaining" ref="counterRemaining"></p>
+    </div>
+    <div class="yb2-counter__bar" aria-hidden="true"><span ref="counterBar"></span></div>
+    <p class="yb2-counter__message" ref="counterMessage"></p>
+  </div>
+
+  <div class="yb2-toolbar">
+    <div class="yb2-filters" role="group" aria-label="{{ 'yb2.filters_label' | t }}">
+      <button type="button" class="yb2-chip" data-filter="all" aria-pressed="true" ref="filterChips[]" on:click="/setFilter">
+        {{- 'yb2.filter_all' | t -}}
+      </button>
+      {%- for entry in type_entries -%}
+        {%- assign parts = entry | split: '|' -%}
+        {%- if parts[1] != blank -%}
+          <button type="button" class="yb2-chip" data-filter="{{ parts[1] }}" aria-pressed="false" ref="filterChips[]" on:click="/setFilter">
+            {{- parts[2] | escape -}}
+          </button>
+        {%- endif -%}
+      {%- endfor -%}
+      {%- if has_vegan -%}
+        <button type="button" class="yb2-chip" data-filter="vegan" aria-pressed="false" ref="filterChips[]" on:click="/setFilter">
+          {{- 'yb2.filter_vegan' | t -}}
+        </button>
+      {%- endif -%}
+      {%- if has_best_sellers -%}
+        <button type="button" class="yb2-chip" data-filter="best-seller" aria-pressed="false" ref="filterChips[]" on:click="/setFilter">
+          {{- 'yb2.filter_best_sellers' | t -}}
+        </button>
+      {%- endif -%}
+    </div>
+
+    {%- if section.settings.show_search -%}
+      <div class="yb2-search">
+        <label class="visually-hidden" for="Yb2Search-{{ section.id }}">{{ 'yb2.search_label' | t }}</label>
+        {%- render 'yb2-icon', name: 'search' -%}
+        <input
+          class="yb2-search__input"
+          type="search"
+          id="Yb2Search-{{ section.id }}"
+          placeholder="{{ 'yb2.search_placeholder' | t }}"
+          autocomplete="off"
+          ref="search"
+          on:input="/handleSearch"
+        >
+      </div>
+    {%- endif -%}
+  </div>
+
+  <p class="yb2-results" ref="resultsCount"></p>
+
+  <ul class="yb2-grid" role="list">
+    {%- for flavor in flavors -%}
+      {%- render 'yb2-flavor-card', product: flavor, section_id: section.id -%}
+    {%- endfor -%}
+  </ul>
+
+  <div class="yb2-empty" ref="emptyState" hidden>
+    <p>{{ 'yb2.no_results' | t }}</p>
+    <button type="button" class="yb2-link" on:click="/clearFilters">{{ 'yb2.clear_filters' | t }}</button>
+  </div>
+</section>
+
+{% stylesheet %}
+  .yb2-counter {
+    display: grid;
+    gap: 10px;
+    padding: 16px 18px;
+    border: 1px solid var(--yb2-line);
+    border-radius: var(--yb2-radius);
+    background: rgb(255 255 255 / 0.94);
+    box-shadow: var(--yb2-shadow);
+    backdrop-filter: blur(8px);
+  }
+
+  /* On mobile the sticky bottom bar already shows the count, so only pin on desktop. */
+  @media screen and (min-width: 990px) {
+    .yb2-counter {
+      position: sticky;
+      inset-block-start: calc(var(--header-height, 0px) + 8px);
+      z-index: 3;
+    }
+  }
+
+  .yb2-counter__numbers {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px 16px;
+  }
+
+  .yb2-counter__value {
+    margin: 0;
+    font-family: var(--yb2-serif);
+    font-size: clamp(1.375rem, 3vw, 1.75rem);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .yb2-counter__remaining {
+    margin: 0;
+    color: var(--yb2-ink-soft);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .yb2-counter__bar {
+    overflow: hidden;
+    block-size: 6px;
+    border-radius: 999px;
+    background: var(--yb2-sand);
+  }
+
+  .yb2-counter__bar span {
+    display: block;
+    block-size: 100%;
+    background: var(--yb2-accent);
+    transform: scaleX(var(--yb2-fill, 0));
+    transform-origin: left;
+    transition: transform 240ms var(--yb2-ease), background-color 160ms;
+  }
+
+  :dir(rtl) .yb2-counter__bar span {
+    transform-origin: right;
+  }
+
+  .yb2-counter[data-counter-state='complete'] .yb2-counter__bar span {
+    background: var(--yb2-success);
+  }
+
+  .yb2-counter[data-counter-state='over'] .yb2-counter__bar span {
+    background: var(--yb2-danger);
+  }
+
+  .yb2-counter__message {
+    margin: 0;
+    font-size: 0.875rem;
+  }
+
+  .yb2-counter[data-counter-state='complete'] .yb2-counter__message {
+    color: var(--yb2-success);
+    font-weight: 600;
+  }
+
+  .yb2-counter[data-counter-state='over'] .yb2-counter__message,
+  .yb2-counter[data-counter-state='full-warning'] .yb2-counter__message {
+    color: var(--yb2-danger);
+    font-weight: 600;
+  }
+
+  .yb2-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .yb2-filters {
+    display: flex;
+    gap: 8px;
+    max-inline-size: 100%;
+    overflow-x: auto;
+    padding-block: 2px;
+    scrollbar-width: none;
+  }
+
+  .yb2-filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .yb2-chip {
+    flex: none;
+    min-block-size: 40px;
+    padding: 0 16px;
+    border: 1px solid var(--yb2-line-strong);
+    border-radius: 999px;
+    background: var(--yb2-paper);
+    color: var(--yb2-ink);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 160ms var(--yb2-ease), color 160ms var(--yb2-ease), border-color 160ms;
+  }
+
+  .yb2-chip:hover {
+    border-color: var(--yb2-ink);
+  }
+
+  .yb2-chip[aria-pressed='true'] {
+    border-color: var(--yb2-ink);
+    background: var(--yb2-ink);
+    color: var(--yb2-paper);
+  }
+
+  .yb2-search {
+    position: relative;
+    flex: 1 1 220px;
+    max-inline-size: 320px;
+  }
+
+  @media screen and (max-width: 749px) {
+    .yb2-search {
+      max-inline-size: none;
+    }
+  }
+
+  .yb2-search svg {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 14px;
+    inline-size: 16px;
+    block-size: 16px;
+    color: var(--yb2-ink-soft);
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .yb2-search__input {
+    inline-size: 100%;
+    min-block-size: 44px;
+    padding: 0 16px 0 40px;
+    border: 1px solid var(--yb2-line-strong);
+    border-radius: 999px;
+    background: var(--yb2-paper);
+    color: var(--yb2-ink);
+    font: inherit;
+    font-size: 1rem;
+  }
+
+  .yb2-results {
+    margin: 0;
+    color: var(--yb2-ink-soft);
+    font-size: 0.8125rem;
+  }
+
+  .yb2-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media screen and (min-width: 750px) {
+    .yb2-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+  }
+
+  @media screen and (min-width: 1200px) {
+    .yb2-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .yb2-empty {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    padding: 40px 16px;
+    border: 1px dashed var(--yb2-line-strong);
+    border-radius: var(--yb2-radius);
+    text-align: center;
+  }
+
+  .yb2-empty[hidden] {
+    display: none;
+  }
+
+  .yb2-empty p {
+    margin: 0;
+  }
+{% endstylesheet %}

@@ -1,0 +1,72 @@
+{
+  "sections": {
+    "builder": {
+      "type": "yb2-builder",
+      "blocks": {
+        "size_6": {
+          "type": "size",
+          "settings": { "option_value": "6 Pieces", "pieces": 6, "description": "A sweet little thank-you", "badge": "" }
+        },
+        "size_12": {
+          "type": "size",
+          "settings": { "option_value": "12 Pieces", "pieces": 12, "description": "Perfect for sharing", "badge": "Most popular" }
+        },
+        "size_16": {
+          "type": "size",
+          "settings": { "option_value": "16 Pieces", "pieces": 16, "description": "A generous gift", "badge": "" }
+        },
+        "size_24": {
+          "type": "size",
+          "settings": { "option_value": "24 Pieces", "pieces": 24, "description": "For the true chocolate lover", "badge": "Best value" }
+        },
+        "sleeve_classic": {
+          "type": "sleeve",
+          "settings": { "option_value": "Classic Sleeve", "description": "Cream linen with cocoa stripes", "pattern": "classic" }
+        },
+        "sleeve_birthday": {
+          "type": "sleeve",
+          "settings": { "option_value": "Birthday Sleeve", "description": "Blush pink with hand-drawn confetti", "pattern": "birthday" }
+        },
+        "sleeve_holiday": {
+          "type": "sleeve",
+          "settings": { "option_value": "Holiday Sleeve", "description": "Forest green with a gold star", "pattern": "holiday" }
+        },
+        "sleeve_premium": {
+          "type": "sleeve",
+          "settings": { "option_value": "Premium Gift Sleeve", "description": "Matte black with gold foil frame", "pattern": "premium" }
+        }
+      },
+      "block_order": [
+        "size_6",
+        "size_12",
+        "size_16",
+        "size_24",
+        "sleeve_classic",
+        "sleeve_birthday",
+        "sleeve_holiday",
+        "sleeve_premium"
+      ],
+      "settings": {
+        "box_product": "signature-chocolate-box",
+        "flavors": [
+          "chocolate-dark-sea-salt-caramel",
+          "chocolate-milk-hazelnut-praline",
+          "chocolate-sicilian-pistachio",
+          "chocolate-raspberry-rose",
+          "chocolate-madagascar-vanilla-bean",
+          "chocolate-espresso-crunch",
+          "chocolate-mint-cacao-nib",
+          "chocolate-toasted-coconut-cream",
+          "chocolate-salted-peanut-butter",
+          "chocolate-orange-cardamom",
+          "chocolate-honey-lavender",
+          "chocolate-cinnamon-churro"
+        ],
+        "heading": "Build your chocolate box",
+        "intro": "<p>Handmade chocolates, chosen by you. Pick a size, fill every slot with your favourite flavors and finish with a sleeve.</p>",
+        "show_search": true
+      }
+    }
+  },
+  "order": ["builder"]
+}

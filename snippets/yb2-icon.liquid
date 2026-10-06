@@ -1,0 +1,29 @@
+{% doc %}
+  Renders a small decorative line icon for the BYOB 2 builder.
+
+  @param {string} name - One of: check, plus, minus, arrow-right, arrow-left, search, edit, box, cart
+
+  @example
+  {% render 'yb2-icon', name: 'check' %}
+{% enddoc %}
+
+{%- case name -%}
+  {%- when 'check' -%}
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 8.5 3.2 3L13 4.5"/></svg>
+  {%- when 'plus' -%}
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
+  {%- when 'minus' -%}
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M3 8h10"/></svg>
+  {%- when 'arrow-right' -%}
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+  {%- when 'arrow-left' -%}
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8H3M7 4 3 8l4 4"/></svg>
+  {%- when 'search' -%}
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>
+  {%- when 'edit' -%}
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 3.5l2 2L6 12H4v-2z"/></svg>
+  {%- when 'box' -%}
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/><path d="M12 12v8"/></svg>
+  {%- when 'cart' -%}
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2.5h1.6l1.6 7.5h7.1l1.4-5.5H4.3"/><circle cx="6" cy="13" r="1"/><circle cx="12" cy="13" r="1"/></svg>
+{%- endcase -%}

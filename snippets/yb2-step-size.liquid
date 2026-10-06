@@ -1,0 +1,124 @@
+{% doc %}
+  Step 1 of the BYOB 2 builder: box size selection. Sizes come from the section's
+  "size" blocks and are matched to the box product's first option by value. The
+  price shown is the cheapest available variant for that size.
+
+  @param {object} box_product - The box product (options: size, sleeve)
+  @param {object} section - The owning section, for blocks and unique IDs
+
+  @example
+  {% render 'yb2-step-size', box_product: box_product, section: section %}
+{% enddoc %}
+
+<section class="yb2-step" data-step-panel="size" ref="stepPanels[]" aria-labelledby="Yb2Title-size-{{ section.id }}">
+  <div class="yb2-step__header">
+    <h2 class="yb2-step__title" id="Yb2Title-size-{{ section.id }}" tabindex="-1">{{ 'yb2.steps.size' | t }}</h2>
+    <p class="yb2-step__intro">{{ 'yb2.step_intros.size' | t }}</p>
+  </div>
+
+  <fieldset class="yb2-sizes">
+    <legend class="visually-hidden">{{ 'yb2.steps.size' | t }}</legend>
+    {%- for block in section.blocks -%}
+      {%- if block.type == 'size' and block.settings.option_value != blank -%}
+        {%- liquid
+          assign value = block.settings.option_value
+          assign min_price = nil
+          for variant in box_product.variants
+            if variant.option1 == value and variant.available
+              if min_price == nil or variant.price < min_price
+                assign min_price = variant.price
+              endif
+            endif
+          endfor
+          assign pieces = block.settings.pieces
+          assign columns = 3
+          if pieces > 20
+            assign columns = 6
+          elsif pieces > 9
+            assign columns = 4
+          endif
+          assign input_id = 'Yb2Size-' | append: section.id | append: '-' | append: forloop.index
+        -%}
+        <label class="yb2-option yb2-size" for="{{ input_id }}" {{ block.shopify_attributes }}>
+          <input
+            class="yb2-option__input"
+            type="radio"
+            id="{{ input_id }}"
+            name="yb2-size-{{ section.id }}"
+            value="{{ value | escape }}"
+            ref="sizeInputs[]"
+            on:change="/selectSize"
+            {% if min_price == nil %}
+              disabled
+            {% endif %}
+          >
+          <span class="yb2-option__check" aria-hidden="true">{%- render 'yb2-icon', name: 'check' -%}</span>
+          <span class="yb2-size__visual" style="--yb2-cols: {{ columns }};" aria-hidden="true">
+            {%- for i in (1..pieces) -%}<span class="yb2-size__dot"></span>{%- endfor -%}
+          </span>
+          {%- if block.settings.badge != blank -%}
+            <span class="yb2-badge">{{ block.settings.badge | escape }}</span>
+          {%- endif -%}
+          <span class="yb2-option__name">{{ value | escape }}</span>
+          <span class="yb2-option__meta">{{ 'yb2.size_choose' | t: count: pieces }}</span>
+          {%- if block.settings.description != blank -%}
+            <span class="yb2-option__meta">{{ block.settings.description | escape }}</span>
+          {%- endif -%}
+          <span class="yb2-option__price">
+            {%- if min_price != nil -%}{{ min_price | money }}{%- else -%}—{%- endif -%}
+          </span>
+        </label>
+      {%- endif -%}
+    {%- endfor -%}
+  </fieldset>
+</section>
+
+{% stylesheet %}
+  .yb2-sizes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .yb2-size {
+    align-content: start;
+    gap: 8px;
+  }
+
+  .yb2-size__visual {
+    display: grid;
+    grid-template-columns: repeat(var(--yb2-cols), 1fr);
+    gap: 4px;
+    justify-self: start;
+    inline-size: calc(var(--yb2-cols) * 14px + (var(--yb2-cols) - 1) * 4px);
+    margin-block-end: 8px;
+    padding: 8px;
+    border-radius: 8px;
+    background: var(--yb2-sand);
+  }
+
+  .yb2-size__dot {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #8d5a3c, #4a2a1a 70%);
+  }
+
+  .yb2-size:has(:checked) .yb2-size__visual {
+    background: var(--yb2-accent-soft);
+  }
+
+  /* Badge sits beside the visual so every card's title lines up. */
+  .yb2-size .yb2-badge {
+    position: absolute;
+    inset-block-start: 16px;
+    inset-inline-end: 48px;
+  }
+
+  .yb2-size .yb2-option__price {
+    margin-block-start: 6px;
+    font-size: 1.125rem;
+  }
+{% endstylesheet %}

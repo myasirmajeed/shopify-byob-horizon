@@ -1,0 +1,239 @@
+{% doc %}
+  Renders the four-step progress navigation for the BYOB 2 builder. Desktop shows
+  every step; mobile shows a compact "Step x of 4" bar. `<yb2-builder-component>`
+  updates state attributes and enables completed steps.
+
+  @example
+  {% render 'yb2-progress' %}
+{% enddoc %}
+
+{%- assign step_ids = 'size,flavors,sleeve,review' | split: ',' -%}
+
+<nav class="yb2-progress" aria-label="{{ 'yb2.progress_label' | t }}">
+  <ol class="yb2-progress__list" role="list">
+    {%- for step_id in step_ids -%}
+      {%- assign step_key = 'yb2.steps.' | append: step_id -%}
+      <li class="yb2-progress__item" data-step-item="{{ step_id }}">
+        <button
+          type="button"
+          class="yb2-progress__step"
+          data-goto="{{ step_id }}"
+          on:click="/goToStepFromEvent"
+          ref="stepButtons[]"
+          {% unless forloop.first %}
+            disabled
+          {% endunless %}
+        >
+          <span class="yb2-progress__marker" aria-hidden="true">
+            <span class="yb2-progress__number">{{ forloop.index }}</span>
+            <span class="yb2-progress__done">{%- render 'yb2-icon', name: 'check' -%}</span>
+          </span>
+          <span class="yb2-progress__text">
+            <span class="yb2-progress__kicker">{{ 'yb2.step_number' | t: number: forloop.index }}</span>
+            <span class="yb2-progress__label">{{ step_key | t }}</span>
+          </span>
+          <span class="visually-hidden" data-step-state></span>
+        </button>
+      </li>
+    {%- endfor -%}
+  </ol>
+
+  <div class="yb2-progress__compact" aria-hidden="true">
+    <span class="yb2-progress__compact-text" ref="compactStep"></span>
+    <span class="yb2-progress__segments">
+      {%- for step_id in step_ids -%}
+        <span class="yb2-progress__segment" data-segment="{{ step_id }}"></span>
+      {%- endfor -%}
+    </span>
+  </div>
+</nav>
+
+{% stylesheet %}
+  .yb2-progress {
+    display: grid;
+    gap: 10px;
+  }
+
+  .yb2-progress__list {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media screen and (min-width: 750px) {
+    .yb2-progress__compact {
+      display: none;
+    }
+  }
+
+  /* Mobile: numbered markers stay clickable; the current step's name shows below. */
+  @media screen and (max-width: 749px) {
+    .yb2-progress__step {
+      justify-content: center;
+      padding: 4px;
+    }
+
+    .yb2-progress__text {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    .yb2-progress__item:not(:last-child)::after {
+      inset-block-start: 22px;
+      inset-inline: calc(50% + 22px) calc(-50% + 22px - 8px);
+    }
+
+    .yb2-progress .yb2-progress__segments {
+      display: none;
+    }
+  }
+
+  .yb2-progress__item {
+    position: relative;
+    min-width: 0;
+  }
+
+  /* Connector line between steps */
+  .yb2-progress__item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    inset-block-start: 26px;
+    inset-inline: calc(16px + 36px + 8px) -8px;
+    block-size: 1px;
+    background: var(--yb2-line);
+    z-index: 0;
+  }
+
+  .yb2-progress__item[data-state='complete']:not(:last-child)::after {
+    background: var(--yb2-accent);
+  }
+
+  .yb2-progress__step {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    inline-size: 100%;
+    padding: 8px 16px 8px 8px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--yb2-ink-soft);
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+    transition: background-color 160ms var(--yb2-ease);
+  }
+
+  .yb2-progress__step:disabled {
+    cursor: default;
+    opacity: 0.55;
+  }
+
+  .yb2-progress__step:hover:not(:disabled) {
+    background: var(--yb2-paper);
+  }
+
+  .yb2-progress__marker {
+    position: relative;
+    display: grid;
+    flex: none;
+    place-items: center;
+    inline-size: 36px;
+    block-size: 36px;
+    border: 1px solid var(--yb2-line-strong);
+    border-radius: 50%;
+    background: var(--yb2-cream);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .yb2-progress__done {
+    display: none;
+  }
+
+  .yb2-progress__done svg {
+    inline-size: 14px;
+    block-size: 14px;
+  }
+
+  .yb2-progress__item[data-state='current'] .yb2-progress__marker {
+    border-color: var(--yb2-ink);
+    background: var(--yb2-ink);
+    color: var(--yb2-paper);
+  }
+
+  .yb2-progress__item[data-state='complete'] .yb2-progress__marker {
+    border-color: var(--yb2-accent);
+    background: var(--yb2-accent);
+    color: var(--yb2-accent-ink);
+  }
+
+  .yb2-progress__item[data-state='complete'] .yb2-progress__number {
+    display: none;
+  }
+
+  .yb2-progress__item[data-state='complete'] .yb2-progress__done {
+    display: grid;
+  }
+
+  .yb2-progress__text {
+    display: grid;
+    min-width: 0;
+  }
+
+  .yb2-progress__kicker {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .yb2-progress__label {
+    overflow: hidden;
+    color: var(--yb2-ink);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .yb2-progress__compact {
+    display: grid;
+    gap: 8px;
+  }
+
+  .yb2-progress__compact-text {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .yb2-progress__segments {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+  }
+
+  .yb2-progress__segment {
+    block-size: 4px;
+    border-radius: 999px;
+    background: var(--yb2-line);
+    transition: background-color 200ms var(--yb2-ease);
+  }
+
+  .yb2-progress__segment[data-state='current'] {
+    background: var(--yb2-ink);
+  }
+
+  .yb2-progress__segment[data-state='complete'] {
+    background: var(--yb2-accent);
+  }
+{% endstylesheet %}

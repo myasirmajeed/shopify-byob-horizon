@@ -1,0 +1,53 @@
+{% doc %}
+  Renders an original illustrated box sleeve for the BYOB 2 builder.
+
+  @param {string} pattern - classic, birthday, holiday or premium
+
+  @example
+  {% render 'yb2-sleeve-art', pattern: 'holiday' %}
+{% enddoc %}
+
+<svg class="yb2-sleeve-art yb2-sleeve-art--{{ pattern | default: 'classic' }}" viewBox="0 0 200 120" aria-hidden="true" focusable="false">
+  <rect x="20" y="22" width="160" height="80" rx="8" fill="#5a3522"/>
+  <rect x="20" y="22" width="160" height="10" rx="4" fill="#3d2316"/>
+  {%- case pattern -%}
+    {%- when 'birthday' -%}
+      <rect x="62" y="22" width="76" height="80" fill="#f6d9d2"/>
+      <g>
+        <circle cx="76" cy="40" r="3" fill="#e0657e"/><circle cx="118" cy="36" r="2.5" fill="#f2b84b"/>
+        <circle cx="96" cy="88" r="3" fill="#62a7c9"/><circle cx="126" cy="80" r="2.5" fill="#e0657e"/>
+        <rect x="84" y="56" width="6" height="3" rx="1.5" fill="#f2b84b" transform="rotate(30 87 57)"/>
+        <rect x="112" y="58" width="6" height="3" rx="1.5" fill="#62a7c9" transform="rotate(-25 115 59)"/>
+        <rect x="70" y="74" width="6" height="3" rx="1.5" fill="#7cc39b" transform="rotate(15 73 75)"/>
+      </g>
+      <text x="100" y="66" text-anchor="middle" font-family="Georgia, serif" font-size="11" font-style="italic" fill="#8a3a4d">celebrate</text>
+    {%- when 'holiday' -%}
+      <rect x="62" y="22" width="76" height="80" fill="#1f4a3a"/>
+      <g fill="#e9c46a">
+        <path d="M100 46l3 7 7 .6-5.4 4.6 1.7 7-6.3-3.8-6.3 3.8 1.7-7-5.4-4.6 7-.6z"/>
+        <circle cx="78" cy="38" r="1.6"/><circle cx="122" cy="40" r="2"/><circle cx="82" cy="86" r="1.8"/>
+        <circle cx="120" cy="84" r="1.6"/><circle cx="72" cy="62" r="1.2"/><circle cx="128" cy="64" r="1.4"/>
+      </g>
+      <rect x="62" y="92" width="76" height="4" fill="#b8342f"/>
+    {%- when 'premium' -%}
+      <rect x="62" y="22" width="76" height="80" fill="#1c1410"/>
+      <rect x="66" y="26" width="68" height="72" fill="none" stroke="#c9a15a" stroke-width="1.2"/>
+      <rect x="70" y="30" width="60" height="64" fill="none" stroke="#c9a15a" stroke-width="0.6" opacity="0.7"/>
+      <path d="M100 48l10 14-10 14-10-14z" fill="none" stroke="#c9a15a" stroke-width="1.4"/>
+      <circle cx="100" cy="62" r="3" fill="#c9a15a"/>
+    {%- else -%}
+      <rect x="62" y="22" width="76" height="80" fill="#f3ebe0"/>
+      <g stroke="#b88b62" stroke-width="2">
+        <path d="M70 22v80M80 22v80M120 22v80M130 22v80"/>
+      </g>
+      <rect x="86" y="54" width="28" height="16" rx="2" fill="#ffffff" stroke="#b88b62" stroke-width="1"/>
+  {%- endcase -%}
+</svg>
+
+{% stylesheet %}
+  .yb2-sleeve-art {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+  }
+{% endstylesheet %}

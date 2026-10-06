@@ -1,0 +1,343 @@
+{% doc %}
+  Renders the BYOB 2 summary: a sticky sidebar on desktop and a compact sticky
+  bottom bar on mobile with an expandable box preview. Owns the step navigation
+  buttons and the builder's single screen-reader announcement region.
+
+  @example
+  {% render 'yb2-summary' %}
+{% enddoc %}
+
+<aside class="yb2-summary" ref="summary" data-expanded="false" aria-labelledby="Yb2SummaryTitle">
+  <div class="yb2-summary__panel" id="Yb2SummaryPanel" ref="summaryPanel">
+    <h2 class="yb2-summary__title" id="Yb2SummaryTitle">{{ 'yb2.summary_heading' | t }}</h2>
+
+    <div class="yb2-tray-wrap">
+      <p class="visually-hidden" ref="trayLabel"></p>
+      <ul class="yb2-tray" role="list" ref="tray"></ul>
+    </div>
+
+    <dl class="yb2-stats">
+      <div class="yb2-stats__row">
+        <dt>{{ 'yb2.summary_size' | t }}</dt>
+        <dd ref="statSize"></dd>
+      </div>
+      <div class="yb2-stats__row">
+        <dt>{{ 'yb2.summary_selected' | t }}</dt>
+        <dd ref="statSelected"></dd>
+      </div>
+      <div class="yb2-stats__row">
+        <dt>{{ 'yb2.summary_remaining' | t }}</dt>
+        <dd ref="statRemaining"></dd>
+      </div>
+      <div class="yb2-stats__row">
+        <dt>{{ 'yb2.summary_sleeve' | t }}</dt>
+        <dd ref="statSleeve"></dd>
+      </div>
+      <div class="yb2-stats__row yb2-stats__row--price">
+        <dt>{{ 'yb2.summary_price' | t }}</dt>
+        <dd ref="statPrice"></dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="yb2-summary__bar">
+    <button
+      type="button"
+      class="yb2-summary__toggle"
+      ref="summaryToggle"
+      aria-expanded="false"
+      aria-controls="Yb2SummaryPanel"
+      on:click="/toggleSummary"
+    >
+      {%- render 'yb2-icon', name: 'box' -%}
+      <span class="yb2-summary__toggle-text">
+        <span ref="barCount"></span>
+        <span class="yb2-summary__toggle-price" ref="barPrice"></span>
+      </span>
+      <span class="visually-hidden">{{ 'yb2.view_box' | t }}</span>
+    </button>
+
+    <div class="yb2-summary__nav">
+      <button type="button" class="yb2-button yb2-button--ghost yb2-summary__back" ref="backButton" on:click="/goBack">
+        {%- render 'yb2-icon', name: 'arrow-left' -%}
+        <span class="yb2-summary__back-text">{{ 'yb2.back' | t }}</span>
+      </button>
+      <button type="button" class="yb2-button yb2-summary__next" ref="nextButton" on:click="/goNext" disabled>
+        <span ref="nextLabel">{{ 'yb2.continue' | t }}</span>
+        {%- render 'yb2-icon', name: 'arrow-right' -%}
+      </button>
+    </div>
+    <p class="yb2-summary__hint" ref="nextHint"></p>
+  </div>
+
+  <p class="visually-hidden" role="status" aria-live="polite" ref="announcer"></p>
+</aside>
+
+{% stylesheet %}
+  .yb2-summary {
+    position: sticky;
+    inset-block-end: 0;
+    z-index: 5;
+    display: grid;
+    margin-inline: calc(-1 * var(--yb2-gutter));
+    border-block-start: 1px solid var(--yb2-line);
+    background: var(--yb2-paper);
+    box-shadow: 0 -10px 30px rgb(34 23 15 / 0.08);
+  }
+
+  @media screen and (min-width: 990px) {
+    .yb2-summary {
+      inset-block: calc(var(--header-height, 0px) + 16px) auto;
+      gap: 0;
+      margin-inline: 0;
+      overflow: hidden;
+      border: 1px solid var(--yb2-line);
+      border-radius: var(--yb2-radius);
+      box-shadow: var(--yb2-shadow-lift);
+    }
+  }
+
+  .yb2-summary__panel {
+    display: none;
+    gap: 16px;
+    max-block-size: 55vh;
+    overflow-y: auto;
+    padding: 20px var(--yb2-gutter) 8px;
+  }
+
+  .yb2-summary[data-expanded='true'] .yb2-summary__panel {
+    display: grid;
+  }
+
+  @media screen and (min-width: 990px) {
+    .yb2-summary__panel {
+      display: grid;
+      max-block-size: none;
+      overflow: visible;
+      padding: 24px 24px 8px;
+    }
+  }
+
+  .yb2-summary__title {
+    margin: 0;
+    font-family: var(--yb2-serif);
+    font-size: 1.375rem;
+    font-weight: 500;
+  }
+
+  .yb2-tray-wrap {
+    padding: 14px;
+    border-radius: 14px;
+    background: linear-gradient(160deg, #6b4129, #3f2416);
+    box-shadow: inset 0 2px 6px rgb(0 0 0 / 0.35);
+  }
+
+  .yb2-tray-wrap {
+    justify-self: start;
+    inline-size: 100%;
+    max-inline-size: calc(var(--yb2-tray-cols, 4) * 56px + 28px);
+  }
+
+  .yb2-tray {
+    display: grid;
+    grid-template-columns: repeat(var(--yb2-tray-cols, 4), minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .yb2-tray__slot {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: rgb(0 0 0 / 0.28);
+    box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.4);
+  }
+
+  .yb2-tray__piece {
+    position: relative;
+    inline-size: 84%;
+    block-size: 84%;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--yb2-shell-hi), var(--yb2-shell) 62%);
+    box-shadow: 0 2px 3px rgb(0 0 0 / 0.35);
+    cursor: pointer;
+    animation: yb2-drop 260ms var(--yb2-ease);
+  }
+
+  .yb2-tray__piece::after {
+    content: '';
+    position: absolute;
+    inset: 30% 30% auto auto;
+    inline-size: 26%;
+    block-size: 26%;
+    border-radius: 50%;
+    background: var(--yb2-accent-c);
+  }
+
+  .yb2-tray__piece:hover {
+    filter: brightness(1.1);
+  }
+
+  .yb2-tray__empty-note {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: rgb(255 255 255 / 0.75);
+    font-size: 0.8125rem;
+    text-align: center;
+  }
+
+  .yb2-stats {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    font-size: 0.9375rem;
+  }
+
+  .yb2-stats__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .yb2-stats__row dt {
+    color: var(--yb2-ink-soft);
+  }
+
+  .yb2-stats__row dd {
+    margin: 0;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+  }
+
+  .yb2-stats__row--price {
+    padding-block-start: 10px;
+    border-block-start: 1px solid var(--yb2-line);
+    font-size: 1.0625rem;
+  }
+
+  .yb2-summary__bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 12px var(--yb2-gutter) calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media screen and (min-width: 990px) {
+    .yb2-summary__bar {
+      grid-template-columns: 1fr;
+      padding: 8px 24px 24px;
+    }
+  }
+
+  .yb2-summary__toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-block-size: 48px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--yb2-ink);
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+  }
+
+  .yb2-summary__toggle svg {
+    flex: none;
+    inline-size: 24px;
+    block-size: 24px;
+    color: var(--yb2-accent);
+  }
+
+  .yb2-summary__toggle-text {
+    display: grid;
+    min-width: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .yb2-summary__toggle-price {
+    color: var(--yb2-ink-soft);
+    font-weight: 500;
+  }
+
+  @media screen and (min-width: 990px) {
+    .yb2-summary__toggle {
+      display: none;
+    }
+  }
+
+  .yb2-summary__nav {
+    display: flex;
+    gap: 8px;
+  }
+
+  .yb2-summary__nav .yb2-button {
+    min-block-size: 48px;
+    padding-inline: 18px;
+  }
+
+  .yb2-summary__nav svg {
+    inline-size: 16px;
+    block-size: 16px;
+  }
+
+  .yb2-summary__back[hidden] {
+    display: none;
+  }
+
+  @media screen and (max-width: 989px) {
+    .yb2-summary__back {
+      padding-inline: 14px;
+    }
+
+    .yb2-summary__back-text {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+  }
+
+  @media screen and (min-width: 990px) {
+    .yb2-summary__nav .yb2-summary__next {
+      flex: 1;
+    }
+  }
+
+  .yb2-summary__hint {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--yb2-ink-soft);
+    font-size: 0.8125rem;
+  }
+
+  .yb2-summary__hint:empty {
+    display: none;
+  }
+
+  @keyframes yb2-drop {
+    from {
+      opacity: 0;
+      transform: translateY(-6px) scale(0.8);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .yb2-tray__piece {
+      animation: none;
+    }
+  }
+{% endstylesheet %}

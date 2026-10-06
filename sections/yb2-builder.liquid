@@ -1,0 +1,516 @@
+{% comment %}
+  Section contract.
+  Build Your Own Box 2: a four-step chocolate box builder (size → flavors → sleeve →
+  review). The box product's variants are "Box size × Sleeve", so the cart is
+  charged the real variant price. Flavors are products listed in a product_list
+  setting and are stored on the cart line as properties.
+  Fully namespaced with `yb2-` so it can coexist with the first BYOB demo.
+  @example
+  <!-- Assigned through templates/page.yb2.json on the /pages/build-your-own-box-2 page -->
+{% endcomment %}
+
+{%- liquid
+  assign box_product = section.settings.box_product
+  assign flavors = section.settings.flavors
+  assign storage_key = 'yb2:v1:' | append: section.id | append: ':' | append: box_product.id
+-%}
+
+<div class="yb2-section">
+  {%- if box_product == blank -%}
+    <p class="yb2-notice">{{ 'yb2.no_box_product' | t }}</p>
+  {%- elsif flavors == blank or flavors.count == 0 -%}
+    <p class="yb2-notice">{{ 'yb2.no_flavors' | t }}</p>
+  {%- else -%}
+    <yb2-builder-component
+      class="yb2"
+      data-section-id="{{ section.id }}"
+      data-storage-key="{{ storage_key | escape }}"
+      data-money-format="{{ shop.money_format | strip_html | escape }}"
+      data-currency="{{ cart.currency.iso_code }}"
+      data-step="size"
+    >
+      <header class="yb2-hero">
+        <p class="yb2-eyebrow">{{ 'yb2.eyebrow' | t }}</p>
+        <h1 class="yb2-hero__title">{{ section.settings.heading | default: box_product.title | escape }}</h1>
+        {%- if section.settings.intro != blank -%}
+          <div class="yb2-hero__intro">{{ section.settings.intro }}</div>
+        {%- endif -%}
+      </header>
+
+      <noscript><p class="yb2-notice">{{ 'yb2.no_js' | t }}</p></noscript>
+
+      <div class="yb2-restored" ref="restored" hidden>
+        <p>{{ 'yb2.restored' | t }}</p>
+        <button type="button" class="yb2-link" on:click="/startOver">{{ 'yb2.start_over' | t }}</button>
+      </div>
+
+      {%- render 'yb2-progress' -%}
+
+      <div class="yb2-layout">
+        <div class="yb2-stage">
+          {%- render 'yb2-step-size', box_product: box_product, section: section -%}
+          {%- render 'yb2-step-flavors', flavors: flavors, section: section -%}
+          {%- render 'yb2-step-sleeve', section: section -%}
+          {%- render 'yb2-step-review' -%}
+        </div>
+
+        {%- render 'yb2-summary' -%}
+      </div>
+
+      {%- render 'yb2-data', box_product: box_product, flavors: flavors, section: section -%}
+    </yb2-builder-component>
+
+    <script src="{{ 'yb2-builder.js' | asset_url }}" type="module" fetchpriority="low"></script>
+  {%- endif -%}
+</div>
+
+{% stylesheet %}
+  /* Design tokens for the BYOB 2 experience. Scoped to .yb2 so nothing leaks into the theme. */
+  .yb2-section {
+    --yb2-ink: #22170f;
+    --yb2-ink-soft: #5b4a3e;
+    --yb2-paper: #ffffff;
+    --yb2-cream: #faf5ee;
+    --yb2-sand: #f1e7da;
+    --yb2-line: rgb(34 23 15 / 0.12);
+    --yb2-line-strong: rgb(34 23 15 / 0.28);
+    --yb2-accent: #8a4b2d;
+    --yb2-accent-ink: #ffffff;
+    --yb2-accent-soft: #f4e6db;
+    --yb2-gold: #b4883f;
+    --yb2-success: #2e6a4c;
+    --yb2-danger: #a3392a;
+    --yb2-radius: 16px;
+    --yb2-radius-sm: 10px;
+    --yb2-shadow: 0 1px 2px rgb(34 23 15 / 0.06), 0 8px 24px rgb(34 23 15 / 0.06);
+    --yb2-shadow-lift: 0 2px 4px rgb(34 23 15 / 0.08), 0 16px 32px rgb(34 23 15 / 0.1);
+    --yb2-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+    --yb2-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+    --yb2-gutter: max(16px, var(--page-margin, 16px));
+
+    background: var(--yb2-cream);
+    color: var(--yb2-ink);
+    padding-block: clamp(24px, 5vw, 64px) clamp(32px, 6vw, 80px);
+  }
+
+  .yb2 {
+    display: grid;
+    gap: clamp(20px, 3vw, 32px);
+    max-width: 1280px;
+    margin-inline: auto;
+    padding-inline: var(--yb2-gutter);
+  }
+
+  .yb2 *:focus-visible {
+    outline: 2px solid var(--yb2-accent);
+    outline-offset: 3px;
+  }
+
+  .yb2-notice {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px var(--yb2-gutter);
+  }
+
+  .yb2-hero {
+    display: grid;
+    gap: 10px;
+    max-width: 640px;
+  }
+
+  .yb2-eyebrow {
+    margin: 0;
+    color: var(--yb2-accent);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .yb2-hero__title {
+    margin: 0;
+    font-family: var(--yb2-serif);
+    font-size: clamp(2rem, 4.5vw, 3.25rem);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+  }
+
+  .yb2-hero__intro {
+    color: var(--yb2-ink-soft);
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .yb2-hero__intro > * {
+    margin: 0;
+  }
+
+  .yb2-restored {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    padding: 12px 16px;
+    border: 1px solid var(--yb2-line);
+    border-radius: var(--yb2-radius-sm);
+    background: var(--yb2-paper);
+    font-size: 0.875rem;
+  }
+
+  .yb2-restored[hidden] {
+    display: none;
+  }
+
+  .yb2-restored p {
+    margin: 0;
+  }
+
+  .yb2-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--yb2-accent);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+
+  .yb2-layout {
+    display: grid;
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media screen and (min-width: 990px) {
+    .yb2-layout {
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 40px;
+    }
+  }
+
+  .yb2-stage {
+    min-width: 0;
+  }
+
+  /* Shared step chrome */
+  .yb2-step {
+    display: grid;
+    gap: 20px;
+    min-width: 0;
+    animation: yb2-step-in 280ms var(--yb2-ease);
+  }
+
+  .yb2-step[hidden] {
+    display: none;
+  }
+
+  .yb2-step__header {
+    display: grid;
+    gap: 6px;
+  }
+
+  .yb2-step__title {
+    margin: 0;
+    font-family: var(--yb2-serif);
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 500;
+    line-height: 1.15;
+  }
+
+  .yb2-step__title {
+    scroll-margin-block-start: calc(var(--header-height, 0px) + 96px);
+  }
+
+  .yb2-step__title:focus {
+    outline: none;
+  }
+
+  .yb2-step__intro {
+    margin: 0;
+    color: var(--yb2-ink-soft);
+  }
+
+  /* Shared buttons */
+  .yb2-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-block-size: 48px;
+    padding: 0 24px;
+    border: 1px solid var(--yb2-ink);
+    border-radius: 999px;
+    background: var(--yb2-ink);
+    color: var(--yb2-paper);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: background-color 160ms var(--yb2-ease), transform 160ms var(--yb2-ease), opacity 160ms;
+  }
+
+  .yb2-button:hover:not(:disabled) {
+    background: var(--yb2-accent);
+    border-color: var(--yb2-accent);
+  }
+
+  .yb2-button:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .yb2-button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .yb2-button--ghost {
+    background: transparent;
+    color: var(--yb2-ink);
+    border-color: var(--yb2-line-strong);
+  }
+
+  .yb2-button--ghost:hover:not(:disabled) {
+    background: var(--yb2-paper);
+    border-color: var(--yb2-ink);
+    color: var(--yb2-ink);
+  }
+
+  .yb2-button--wide {
+    inline-size: 100%;
+  }
+
+  /* Selectable option cards (sizes and sleeves) share this base. */
+  .yb2-option {
+    position: relative;
+    display: grid;
+    gap: 6px;
+    padding: 18px;
+    border: 1px solid var(--yb2-line);
+    border-radius: var(--yb2-radius);
+    background: var(--yb2-paper);
+    box-shadow: var(--yb2-shadow);
+    cursor: pointer;
+    transition: border-color 160ms var(--yb2-ease), box-shadow 160ms var(--yb2-ease), transform 160ms var(--yb2-ease);
+  }
+
+  .yb2-option:hover {
+    border-color: var(--yb2-line-strong);
+    box-shadow: var(--yb2-shadow-lift);
+    transform: translateY(-2px);
+  }
+
+  .yb2-option:has(:checked) {
+    border-color: var(--yb2-accent);
+    box-shadow: 0 0 0 1px var(--yb2-accent), var(--yb2-shadow-lift);
+  }
+
+  .yb2-option:has(:focus-visible) {
+    outline: 2px solid var(--yb2-accent);
+    outline-offset: 3px;
+  }
+
+  .yb2-option:has(:disabled) {
+    cursor: not-allowed;
+    opacity: 0.5;
+    transform: none;
+  }
+
+  .yb2-option__input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
+  }
+
+  .yb2-option__check {
+    position: absolute;
+    inset-block-start: 14px;
+    inset-inline-end: 14px;
+    display: grid;
+    place-items: center;
+    inline-size: 24px;
+    block-size: 24px;
+    border: 1px solid var(--yb2-line-strong);
+    border-radius: 50%;
+    background: var(--yb2-paper);
+    color: transparent;
+    transition: background-color 160ms, border-color 160ms, color 160ms;
+  }
+
+  .yb2-option:has(:checked) .yb2-option__check {
+    border-color: var(--yb2-accent);
+    background: var(--yb2-accent);
+    color: var(--yb2-accent-ink);
+  }
+
+  .yb2-option__check svg {
+    inline-size: 12px;
+    block-size: 12px;
+  }
+
+  .yb2-option__name {
+    font-family: var(--yb2-serif);
+    font-size: 1.25rem;
+    font-weight: 500;
+  }
+
+  .yb2-option__meta {
+    color: var(--yb2-ink-soft);
+    font-size: 0.875rem;
+  }
+
+  .yb2-option__price {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .yb2-badge {
+    justify-self: start;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--yb2-accent-soft);
+    color: var(--yb2-accent);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  @keyframes yb2-step-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .yb2-step,
+    .yb2-option,
+    .yb2-button {
+      animation: none;
+      transition: none;
+    }
+
+    .yb2-option:hover {
+      transform: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:yb2.name",
+  "tag": "section",
+  "class": "yb2-shopify-section",
+  "settings": [
+    {
+      "type": "product",
+      "id": "box_product",
+      "label": "t:yb2.box_product",
+      "info": "t:yb2.box_product_info"
+    },
+    {
+      "type": "product_list",
+      "id": "flavors",
+      "label": "t:yb2.flavors",
+      "info": "t:yb2.flavors_info",
+      "limit": 50
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:yb2.heading"
+    },
+    {
+      "type": "richtext",
+      "id": "intro",
+      "label": "t:yb2.intro"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_search",
+      "label": "t:yb2.show_search",
+      "default": true
+    }
+  ],
+  "blocks": [
+    {
+      "type": "size",
+      "name": "t:yb2.size_block",
+      "settings": [
+        {
+          "type": "text",
+          "id": "option_value",
+          "label": "t:yb2.option_value",
+          "info": "t:yb2.option_value_info"
+        },
+        {
+          "type": "range",
+          "id": "pieces",
+          "label": "t:yb2.pieces",
+          "min": 2,
+          "max": 48,
+          "step": 1,
+          "default": 12
+        },
+        {
+          "type": "text",
+          "id": "description",
+          "label": "t:yb2.description"
+        },
+        {
+          "type": "text",
+          "id": "badge",
+          "label": "t:yb2.badge"
+        }
+      ]
+    },
+    {
+      "type": "sleeve",
+      "name": "t:yb2.sleeve_block",
+      "settings": [
+        {
+          "type": "text",
+          "id": "option_value",
+          "label": "t:yb2.option_value",
+          "info": "t:yb2.option_value_info"
+        },
+        {
+          "type": "text",
+          "id": "description",
+          "label": "t:yb2.description"
+        },
+        {
+          "type": "select",
+          "id": "pattern",
+          "label": "t:yb2.pattern",
+          "options": [
+            { "value": "classic", "label": "t:yb2.pattern_classic" },
+            { "value": "birthday", "label": "t:yb2.pattern_birthday" },
+            { "value": "holiday", "label": "t:yb2.pattern_holiday" },
+            { "value": "premium", "label": "t:yb2.pattern_premium" }
+          ],
+          "default": "classic"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:yb2.image",
+          "info": "t:yb2.image_info"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:yb2.name",
+      "category": "t:categories.products"
+    }
+  ]
+}
+{% endschema %}

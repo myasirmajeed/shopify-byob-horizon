@@ -1,0 +1,95 @@
+{% doc %}
+  Step 3 of the BYOB 2 builder: sleeve selection. Sleeves come from the section's
+  "sleeve" blocks, matched to the box product's second option by value. Prices are
+  filled in by JavaScript because they depend on the chosen box size.
+
+  @param {object} section - The owning section, for blocks and unique IDs
+
+  @example
+  {% render 'yb2-step-sleeve', section: section %}
+{% enddoc %}
+
+<section
+  class="yb2-step"
+  data-step-panel="sleeve"
+  ref="stepPanels[]"
+  aria-labelledby="Yb2Title-sleeve-{{ section.id }}"
+  hidden
+>
+  <div class="yb2-step__header">
+    <h2 class="yb2-step__title" id="Yb2Title-sleeve-{{ section.id }}" tabindex="-1">{{ 'yb2.steps.sleeve' | t }}</h2>
+    <p class="yb2-step__intro">{{ 'yb2.step_intros.sleeve' | t }}</p>
+  </div>
+
+  <fieldset class="yb2-sleeves">
+    <legend class="visually-hidden">{{ 'yb2.steps.sleeve' | t }}</legend>
+    {%- for block in section.blocks -%}
+      {%- if block.type == 'sleeve' and block.settings.option_value != blank -%}
+        {%- assign input_id = 'Yb2Sleeve-' | append: section.id | append: '-' | append: forloop.index -%}
+        <label class="yb2-option yb2-sleeve" for="{{ input_id }}" {{ block.shopify_attributes }}>
+          <input
+            class="yb2-option__input"
+            type="radio"
+            id="{{ input_id }}"
+            name="yb2-sleeve-{{ section.id }}"
+            value="{{ block.settings.option_value | escape }}"
+            ref="sleeveInputs[]"
+            on:change="/selectSleeve"
+          >
+          <span class="yb2-option__check" aria-hidden="true">{%- render 'yb2-icon', name: 'check' -%}</span>
+          <span class="yb2-sleeve__media">
+            {%- if block.settings.image != blank -%}
+              {{
+                block.settings.image
+                | image_url: width: 480
+                | image_tag: widths: '240, 480', sizes: '(min-width: 750px) 25vw, 45vw', loading: 'lazy', alt: ''
+              }}
+            {%- else -%}
+              {%- render 'yb2-sleeve-art', pattern: block.settings.pattern -%}
+            {%- endif -%}
+          </span>
+          <span class="yb2-option__name">{{ block.settings.option_value | escape }}</span>
+          {%- if block.settings.description != blank -%}
+            <span class="yb2-option__meta">{{ block.settings.description | escape }}</span>
+          {%- endif -%}
+          <span class="yb2-option__price yb2-sleeve__price" data-sleeve-price></span>
+        </label>
+      {%- endif -%}
+    {%- endfor -%}
+  </fieldset>
+</section>
+
+{% stylesheet %}
+  .yb2-sleeves {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr));
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .yb2-sleeve {
+    align-content: start;
+  }
+
+  .yb2-sleeve__media {
+    display: block;
+    overflow: hidden;
+    margin: -6px -6px 6px;
+    border-radius: var(--yb2-radius-sm);
+    background: var(--yb2-sand);
+  }
+
+  .yb2-sleeve__media img {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 5 / 3;
+    object-fit: cover;
+  }
+
+  .yb2-sleeve__price[data-included] {
+    color: var(--yb2-success);
+  }
+{% endstylesheet %}
