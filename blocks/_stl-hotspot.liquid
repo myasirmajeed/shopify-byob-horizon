@@ -1,0 +1,220 @@
+{% doc %}
+  A product hotspot inside a Shop the Look `_stl-look` block. Renders the
+  positioned hotspot button and the product's data as JSON; the parent
+  `<stl-looks-component>` builds the product list and card from that data.
+{% enddoc %}
+
+{%- liquid
+  assign product = block.settings.product
+  assign placeholder = 'stl.placeholder_product' | t
+  assign product_title = product.title | default: placeholder
+-%}
+
+<button
+  type="button"
+  class="stl-hotspot"
+  data-hotspot="{{ block.id }}"
+  data-x="{{ block.settings.x_position }}"
+  data-y="{{ block.settings.y_position }}"
+  style="--stl-x: {{ block.settings.x_position }}%; --stl-y: {{ block.settings.y_position }}%;"
+  aria-label="{{ 'stl.hotspot_label' | t: product: product_title | escape }}"
+  aria-haspopup="dialog"
+  aria-expanded="false"
+  on:click="/selectHotspot"
+  {% if product == blank %}
+    disabled
+  {% endif %}
+  {{ block.shopify_attributes }}
+>
+  <span class="stl-hotspot__dot" aria-hidden="true">
+    <span class="stl-hotspot__number" data-hotspot-number></span>
+    {%- render 'stl-icon', name: 'plus' -%}
+  </span>
+  {%- if block.settings.label != blank -%}
+    <span class="stl-hotspot__label" aria-hidden="true">{{ block.settings.label | escape }}</span>
+  {%- endif -%}
+</button>
+
+{%- if product != blank -%}
+  <script type="application/json" data-stl-product="{{ block.id }}">
+    {%- render 'stl-product-json', product: product, label: block.settings.label -%}
+  </script>
+{%- endif -%}
+
+{% stylesheet %}
+  .stl-hotspot {
+    --stl-dot: 36px;
+
+    position: absolute;
+    /* Intentionally physical: x/y are image coordinates and do not mirror in RTL. */
+    left: var(--stl-x);
+    top: var(--stl-y);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px;
+    border: 0;
+    background: none;
+    color: var(--stl-ink);
+    font: inherit;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .stl-hotspot:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+
+  .stl-hotspot__dot {
+    position: relative;
+    display: grid;
+    place-items: center;
+    inline-size: var(--stl-dot);
+    block-size: var(--stl-dot);
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.94);
+    box-shadow: 0 2px 10px rgb(0 0 0 / 0.25);
+    transition: background-color 180ms var(--stl-ease), color 180ms var(--stl-ease), transform 180ms var(--stl-ease);
+  }
+
+  /* Subtle pulse ring */
+  .stl-hotspot__dot::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid rgb(255 255 255 / 0.9);
+    animation: stl-pulse 2.6s var(--stl-ease) infinite;
+  }
+
+  .stl-hotspot__dot .stl-icon {
+    inline-size: 14px;
+    block-size: 14px;
+    transition: transform 220ms var(--stl-ease);
+  }
+
+  .stl-hotspot__number {
+    display: none;
+    font-size: 0.8125rem;
+    font-weight: 700;
+  }
+
+  .stl-hotspot:hover .stl-hotspot__dot {
+    transform: scale(1.08);
+  }
+
+  /* Active: dark dot and the plus turns into a cross (shape, not just colour). */
+  .stl-hotspot[aria-expanded='true'] .stl-hotspot__dot,
+  .stl-hotspot[data-active] .stl-hotspot__dot {
+    background: var(--stl-ink);
+    color: var(--stl-paper);
+  }
+
+  .stl-hotspot[aria-expanded='true'] .stl-hotspot__dot .stl-icon {
+    transform: rotate(45deg);
+  }
+
+  .stl-hotspot[aria-expanded='true'] .stl-hotspot__dot::before,
+  .stl-hotspot[data-active] .stl-hotspot__dot::before {
+    animation: none;
+    opacity: 0;
+  }
+
+  /* Added to cart: small tick badge. */
+  .stl-hotspot[data-added] .stl-hotspot__dot::after {
+    content: '';
+    position: absolute;
+    inset-block-start: -3px;
+    inset-inline-end: -3px;
+    inline-size: 14px;
+    block-size: 14px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: var(--stl-success)
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3.5 8.5 3 3 6-7' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+      center / 10px no-repeat;
+  }
+
+  .stl-hotspot__label {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.94);
+    box-shadow: 0 2px 10px rgb(0 0 0 / 0.18);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 180ms var(--stl-ease), transform 180ms var(--stl-ease);
+    pointer-events: none;
+  }
+
+  .stl-hotspot:hover .stl-hotspot__label,
+  .stl-hotspot:focus-visible .stl-hotspot__label,
+  .stl-hotspot[data-active] .stl-hotspot__label {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Phones: bigger targets, numbers that match the list, no floating labels. */
+  @media screen and (max-width: 749px) {
+    .stl-hotspot {
+      --stl-dot: 34px;
+
+      padding: 5px;
+    }
+
+    .stl-hotspot__dot .stl-icon {
+      display: none;
+    }
+
+    .stl-hotspot__number {
+      display: block;
+    }
+
+    .stl-hotspot__label {
+      display: none;
+    }
+  }
+
+  @keyframes stl-pulse {
+    0% {
+      opacity: 0.8;
+      transform: scale(1);
+    }
+
+    70%,
+    100% {
+      opacity: 0;
+      transform: scale(1.7);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stl-hotspot__dot::before {
+      animation: none;
+      opacity: 0;
+    }
+
+    .stl-hotspot__dot,
+    .stl-hotspot__dot .stl-icon,
+    .stl-hotspot__label {
+      transition: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:stl.hotspot",
+  "settings": [
+    { "type": "product", "id": "product", "label": "t:stl.product" },
+    { "type": "range", "id": "x_position", "label": "t:stl.x_position", "min": 0, "max": 100, "step": 1, "unit": "%", "default": 50 },
+    { "type": "range", "id": "y_position", "label": "t:stl.y_position", "min": 0, "max": 100, "step": 1, "unit": "%", "default": 50 },
+    { "type": "text", "id": "label", "label": "t:stl.label", "info": "t:stl.label_info" }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,281 @@
+{
+  "sections": {
+    "shop_the_look": {
+      "type": "stl-shop-the-look",
+      "blocks": {
+        "look_living": {
+          "type": "_stl-look",
+          "settings": {
+            "title": "Modern Living Room",
+            "description": "A relaxed corner sofa, nesting tables and soft texture underfoot.",
+            "image": "shopify://shop_images/stl-look-living.jpg"
+          },
+          "blocks": {
+            "hotspot_harbor_corner_sofa": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-harbor-corner-sofa",
+                "x_position": 42,
+                "y_position": 52,
+                "label": "Sofa"
+              }
+            },
+            "hotspot_linen_throw_cushion": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-linen-throw-cushion",
+                "x_position": 56,
+                "y_position": 46,
+                "label": "Cushion"
+              }
+            },
+            "hotspot_arc_floor_lamp": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-arc-floor-lamp",
+                "x_position": 10,
+                "y_position": 16,
+                "label": "Floor lamp"
+              }
+            },
+            "hotspot_nesting_coffee_tables": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-nesting-coffee-tables",
+                "x_position": 47,
+                "y_position": 67,
+                "label": "Coffee tables"
+              }
+            },
+            "hotspot_chevron_wool_rug": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-chevron-wool-rug",
+                "x_position": 62,
+                "y_position": 86,
+                "label": "Rug"
+              }
+            },
+            "hotspot_macrame_plant_hanger": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-macrame-plant-hanger",
+                "x_position": 19,
+                "y_position": 18,
+                "label": "Plant hanger"
+              }
+            }
+          },
+          "block_order": [
+            "hotspot_harbor_corner_sofa",
+            "hotspot_linen_throw_cushion",
+            "hotspot_arc_floor_lamp",
+            "hotspot_nesting_coffee_tables",
+            "hotspot_chevron_wool_rug",
+            "hotspot_macrame_plant_hanger"
+          ]
+        },
+        "look_bedroom": {
+          "type": "_stl-look",
+          "settings": {
+            "title": "Minimal Bedroom",
+            "description": "Washed linen, natural rattan and calm, sculptural shapes.",
+            "image": "shopify://shop_images/stl-look-bedroom.jpg"
+          },
+          "blocks": {
+            "hotspot_rattan_dome_pendant": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-rattan-dome-pendant",
+                "x_position": 57,
+                "y_position": 16,
+                "label": "Pendant"
+              }
+            },
+            "hotspot_washed_linen_duvet_set": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-washed-linen-duvet-set",
+                "x_position": 29,
+                "y_position": 66,
+                "label": "Duvet set"
+              }
+            },
+            "hotspot_geometric_knit_throw": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-geometric-knit-throw",
+                "x_position": 41,
+                "y_position": 75,
+                "label": "Throw"
+              }
+            },
+            "hotspot_opal_globe_table_lamp": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-opal-globe-table-lamp",
+                "x_position": 80,
+                "y_position": 59,
+                "label": "Table lamp"
+              }
+            },
+            "hotspot_pedestal_side_table": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-pedestal-side-table",
+                "x_position": 81,
+                "y_position": 78,
+                "label": "Side table"
+              }
+            },
+            "hotspot_woven_floor_pouf": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-woven-floor-pouf",
+                "x_position": 40,
+                "y_position": 92,
+                "label": "Pouf"
+              }
+            }
+          },
+          "block_order": [
+            "hotspot_rattan_dome_pendant",
+            "hotspot_washed_linen_duvet_set",
+            "hotspot_geometric_knit_throw",
+            "hotspot_opal_globe_table_lamp",
+            "hotspot_pedestal_side_table",
+            "hotspot_woven_floor_pouf"
+          ]
+        },
+        "look_outdoor": {
+          "type": "_stl-look",
+          "settings": {
+            "title": "Outdoor Lounge",
+            "description": "Weather-ready seating for long evenings in the garden.",
+            "image": "shopify://shop_images/stl-look-outdoor.jpg"
+          },
+          "blocks": {
+            "hotspot_coastline_outdoor_loveseat": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-coastline-outdoor-loveseat",
+                "x_position": 57,
+                "y_position": 53,
+                "label": "Loveseat"
+              }
+            },
+            "hotspot_coastline_lounge_chair": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-coastline-lounge-chair",
+                "x_position": 78,
+                "y_position": 63,
+                "label": "Lounge chair"
+              }
+            },
+            "hotspot_slatted_outdoor_coffee_table": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-slatted-outdoor-coffee-table",
+                "x_position": 49,
+                "y_position": 66,
+                "label": "Coffee table"
+              }
+            },
+            "hotspot_concrete_cube_side_table": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-concrete-cube-side-table",
+                "x_position": 31,
+                "y_position": 66,
+                "label": "Side table"
+              }
+            }
+          },
+          "block_order": [
+            "hotspot_coastline_outdoor_loveseat",
+            "hotspot_coastline_lounge_chair",
+            "hotspot_slatted_outdoor_coffee_table",
+            "hotspot_concrete_cube_side_table"
+          ]
+        },
+        "look_office": {
+          "type": "_stl-look",
+          "settings": {
+            "title": "Home Office",
+            "description": "An ergonomic set-up under the eaves, warmed by walnut and greenery.",
+            "image": "shopify://shop_images/stl-look-office.jpg"
+          },
+          "blocks": {
+            "hotspot_mesh_task_chair": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-mesh-task-chair",
+                "x_position": 31,
+                "y_position": 50,
+                "label": "Task chair"
+              }
+            },
+            "hotspot_sit_stand_desk": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-sit-stand-desk",
+                "x_position": 68,
+                "y_position": 54,
+                "label": "Desk"
+              }
+            },
+            "hotspot_botanical_framed_print": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-botanical-framed-print",
+                "x_position": 51,
+                "y_position": 12,
+                "label": "Framed print"
+              }
+            },
+            "hotspot_snake_plant_ceramic_pot": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-snake-plant-ceramic-pot",
+                "x_position": 83,
+                "y_position": 34,
+                "label": "Plant"
+              }
+            },
+            "hotspot_walnut_plant_stand": {
+              "type": "_stl-hotspot",
+              "settings": {
+                "product": "stl-walnut-plant-stand",
+                "x_position": 84,
+                "y_position": 63,
+                "label": "Plant stand"
+              }
+            }
+          },
+          "block_order": [
+            "hotspot_mesh_task_chair",
+            "hotspot_sit_stand_desk",
+            "hotspot_botanical_framed_print",
+            "hotspot_snake_plant_ceramic_pot",
+            "hotspot_walnut_plant_stand"
+          ]
+        }
+      },
+      "block_order": [
+        "look_living",
+        "look_bedroom",
+        "look_outdoor",
+        "look_office"
+      ],
+      "settings": {
+        "heading": "Shop the look",
+        "intro": "<p>Explore real rooms, tap a hotspot to see each piece, then add one item or the whole look to your cart.</p>",
+        "show_add_all": true
+      }
+    }
+  },
+  "order": [
+    "shop_the_look"
+  ]
+}

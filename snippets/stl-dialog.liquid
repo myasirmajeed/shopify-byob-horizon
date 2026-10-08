@@ -1,0 +1,624 @@
+{% doc %}
+  Renders the shared Shop the Look product card (a `<dialog>`) and the product
+  list item template. `<stl-looks-component>` fills both from hotspot data: the
+  card opens next to the hotspot on desktop and as a bottom sheet on mobile.
+
+  @param {string} section_id - The owning section ID, for unique element IDs
+
+  @example
+  {% render 'stl-dialog', section_id: section.id %}
+{% enddoc %}
+
+<dialog class="stl-card" data-stl-dialog aria-labelledby="StlCardTitle-{{ section_id }}" data-mode="sheet">
+  <button type="button" class="stl-card__close" data-card-close on:click="/closeCard" aria-label="{{ 'stl.close' | t }}">
+    {%- render 'stl-icon', name: 'close' -%}
+  </button>
+  <div class="stl-card__media">
+    <img class="stl-card__image" data-card-image alt="" width="640" height="640">
+  </div>
+  <div class="stl-card__body">
+    <h3 class="stl-card__title" id="StlCardTitle-{{ section_id }}" tabindex="-1" data-card-title></h3>
+    <div class="stl-card__prices" data-card-prices></div>
+    <div class="stl-card__rating" data-card-rating hidden></div>
+    <p class="stl-card__description" data-card-description></p>
+    <div class="stl-card__options" data-card-options></div>
+    <div class="stl-card__buy">
+      <div class="stl-qty">
+        <label class="visually-hidden" for="StlQty-{{ section_id }}">{{ 'stl.quantity' | t }}</label>
+        <button type="button" class="stl-qty__button" data-card-decrease on:click="/decreaseQuantity" aria-label="{{ 'stl.decrease' | t }}">
+          {%- render 'stl-icon', name: 'minus' -%}
+        </button>
+        <input
+          class="stl-qty__input"
+          id="StlQty-{{ section_id }}"
+          type="number"
+          inputmode="numeric"
+          min="1"
+          max="99"
+          value="1"
+          data-card-quantity
+          on:change="/changeQuantity"
+        >
+        <button type="button" class="stl-qty__button" data-card-increase on:click="/increaseQuantity" aria-label="{{ 'stl.increase' | t }}">
+          {%- render 'stl-icon', name: 'plus' -%}
+        </button>
+      </div>
+      <button type="button" class="stl-button stl-button--primary stl-card__add" data-card-add on:click="/addFromCard">
+        {%- render 'stl-icon', name: 'cart' -%}
+        <span data-card-add-label>{{ 'stl.add_to_cart' | t }}</span>
+      </button>
+    </div>
+    <p class="stl-card__status" data-card-status role="status" hidden></p>
+    <a class="stl-card__link" data-card-link href="#">{{ 'stl.full_details' | t }}{%- render 'stl-icon', name: 'arrow' -%}</a>
+  </div>
+</dialog>
+
+<template data-stl-item-template>
+  <li class="stl-item" data-item>
+    <label class="stl-item__check">
+      <input type="checkbox" class="stl-item__checkbox" data-item-include on:change="/toggleInclude">
+      <span class="stl-item__checkmark" aria-hidden="true">{%- render 'stl-icon', name: 'check' -%}</span>
+      <span class="visually-hidden" data-item-include-label></span>
+    </label>
+    <button type="button" class="stl-item__main" data-item-view on:click="/viewItem">
+      <span class="stl-item__media">
+        <img class="stl-item__image" data-item-image alt="" width="72" height="72" loading="lazy">
+        <span class="stl-item__number" data-item-number aria-hidden="true"></span>
+      </span>
+      <span class="stl-item__text">
+        <span class="stl-item__title" data-item-title></span>
+        <span class="stl-item__variant" data-item-variant></span>
+        <span class="stl-item__price" data-item-price></span>
+      </span>
+    </button>
+    <div class="stl-item__actions">
+      <span class="stl-item__badge" data-item-badge hidden></span>
+      <button type="button" class="stl-item__add" data-item-add on:click="/addFromList">
+        {%- render 'stl-icon', name: 'plus' -%}
+        <span data-item-add-label>{{ 'stl.add' | t }}</span>
+      </button>
+    </div>
+  </li>
+</template>
+
+{% stylesheet %}
+  /* ---------- Product card (dialog) ---------- */
+  .stl-card {
+    inline-size: min(360px, calc(100vw - 32px));
+    max-block-size: calc(100dvh - 32px);
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+    border: 0;
+    border-radius: var(--stl-radius-lg);
+    background: var(--stl-paper);
+    color: var(--stl-ink);
+    box-shadow: var(--stl-shadow);
+    overscroll-behavior: contain;
+  }
+
+  .stl-card[open] {
+    display: grid;
+  }
+
+  /* Desktop: positioned inside the look image next to the hotspot (JS sets left/top). */
+  .stl-card[data-mode='popover'] {
+    position: absolute;
+    inset: auto;
+    z-index: 6;
+    max-block-size: calc(100% - 24px);
+    animation: stl-card-in 200ms var(--stl-ease);
+  }
+
+  /* Mobile: bottom sheet. */
+  .stl-card[data-mode='sheet'] {
+    position: fixed;
+    inset: auto 0 0 0;
+    inline-size: 100%;
+    max-inline-size: 100%;
+    max-block-size: 88dvh;
+    border-radius: 22px 22px 0 0;
+    padding-block-end: env(safe-area-inset-bottom, 0px);
+    animation: stl-sheet-in 260ms var(--stl-ease);
+  }
+
+  .stl-card[data-mode='sheet'] .stl-card__media {
+    aspect-ratio: 16 / 10;
+  }
+
+  .stl-card::backdrop {
+    background: rgb(23 22 21 / 0.4);
+  }
+
+  .stl-card__close {
+    position: absolute;
+    inset-block-start: 10px;
+    inset-inline-end: 10px;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    inline-size: 40px;
+    block-size: 40px;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.92);
+    color: var(--stl-ink);
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.15);
+    cursor: pointer;
+  }
+
+  .stl-card__media {
+    aspect-ratio: 4 / 3;
+    background: var(--stl-sand);
+  }
+
+  .stl-card__image {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: contain;
+  }
+
+  .stl-card__body {
+    display: grid;
+    gap: 12px;
+    padding: 18px;
+  }
+
+  .stl-card__title {
+    margin: 0;
+    padding-inline-end: 8px;
+    font-family: var(--stl-serif);
+    font-size: 1.375rem;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .stl-card__title:focus {
+    outline: none;
+  }
+
+  .stl-card__prices {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .stl-price {
+    font-size: 1.125rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stl-price--sale {
+    color: var(--stl-accent);
+  }
+
+  .stl-price--compare {
+    color: var(--stl-muted);
+    font-size: 0.9375rem;
+    font-weight: 500;
+  }
+
+  .stl-badge {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--stl-accent-soft);
+    color: var(--stl-accent);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .stl-badge--muted {
+    background: var(--stl-sand);
+    color: var(--stl-muted);
+  }
+
+  .stl-card__rating {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--stl-muted);
+    font-size: 0.875rem;
+  }
+
+  .stl-card__rating[hidden] {
+    display: none;
+  }
+
+  .stl-card__stars {
+    display: inline-flex;
+    color: #c08a2b;
+  }
+
+  .stl-card__description {
+    margin: 0;
+    color: var(--stl-muted);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .stl-card__options {
+    display: grid;
+    gap: 12px;
+  }
+
+  .stl-option {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .stl-option__legend {
+    padding: 0;
+    font-size: 0.8125rem;
+    font-weight: 700;
+  }
+
+  .stl-option__current {
+    color: var(--stl-muted);
+    font-weight: 500;
+  }
+
+  .stl-option__values {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .stl-pill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 40px;
+    padding: 0 14px;
+    border: 1px solid var(--stl-line-strong);
+    border-radius: 999px;
+    font-size: 0.875rem;
+    cursor: pointer;
+  }
+
+  .stl-pill input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
+  }
+
+  .stl-pill:has(:checked) {
+    border-color: var(--stl-ink);
+    background: var(--stl-ink);
+    color: var(--stl-paper);
+  }
+
+  .stl-pill:has(:focus-visible) {
+    outline: 2px solid var(--stl-accent);
+    outline-offset: 2px;
+  }
+
+  .stl-pill[data-unavailable] {
+    color: var(--stl-muted);
+    text-decoration: line-through;
+  }
+
+  .stl-pill[data-unavailable]:has(:checked) {
+    background: var(--stl-muted);
+    border-color: var(--stl-muted);
+    color: var(--stl-paper);
+  }
+
+  .stl-card__buy {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .stl-qty {
+    display: grid;
+    grid-template-columns: 40px 44px 40px;
+    align-items: center;
+    border: 1px solid var(--stl-line-strong);
+    border-radius: 999px;
+  }
+
+  .stl-qty__button {
+    display: grid;
+    place-items: center;
+    block-size: 46px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: var(--stl-ink);
+    cursor: pointer;
+  }
+
+  .stl-qty__button:disabled {
+    cursor: not-allowed;
+    opacity: 0.3;
+  }
+
+  .stl-qty__input {
+    inline-size: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+    text-align: center;
+    -moz-appearance: textfield;
+  }
+
+  .stl-qty__input::-webkit-outer-spin-button,
+  .stl-qty__input::-webkit-inner-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
+  }
+
+  .stl-card__status {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .stl-card__status[hidden] {
+    display: none;
+  }
+
+  .stl-card__status[data-tone='success'] {
+    color: var(--stl-success);
+  }
+
+  .stl-card__status[data-tone='error'] {
+    color: var(--stl-danger);
+  }
+
+  .stl-card__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    justify-self: start;
+    min-block-size: 32px;
+    color: var(--stl-ink);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-underline-offset: 3px;
+  }
+
+  /* ---------- Product list items ---------- */
+  .stl-list {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .stl-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px 8px 12px;
+    border: 1px solid var(--stl-line);
+    border-radius: var(--stl-radius);
+    background: var(--stl-paper);
+    transition: border-color 160ms var(--stl-ease), box-shadow 160ms var(--stl-ease);
+  }
+
+  .stl-item[data-active] {
+    border-color: var(--stl-ink);
+    box-shadow: inset 3px 0 0 var(--stl-accent);
+  }
+
+  .stl-item[data-unavailable] .stl-item__image {
+    opacity: 0.55;
+  }
+
+  .stl-item__check {
+    position: relative;
+    display: grid;
+    place-items: center;
+    inline-size: 24px;
+    block-size: 24px;
+    cursor: pointer;
+  }
+
+  .stl-item__checkbox {
+    position: absolute;
+    inset: -10px;
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
+  }
+
+  .stl-item__checkmark {
+    display: grid;
+    place-items: center;
+    inline-size: 22px;
+    block-size: 22px;
+    border: 1.5px solid var(--stl-line-strong);
+    border-radius: 6px;
+    color: transparent;
+  }
+
+  .stl-item__checkbox:checked + .stl-item__checkmark {
+    border-color: var(--stl-ink);
+    background: var(--stl-ink);
+    color: var(--stl-paper);
+  }
+
+  .stl-item__checkbox:focus-visible + .stl-item__checkmark {
+    outline: 2px solid var(--stl-accent);
+    outline-offset: 2px;
+  }
+
+  .stl-item__checkbox:disabled + .stl-item__checkmark {
+    opacity: 0.35;
+  }
+
+  .stl-item__checkmark .stl-icon {
+    inline-size: 12px;
+    block-size: 12px;
+  }
+
+  .stl-item__main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    padding: 2px;
+    border: 0;
+    border-radius: 10px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+  }
+
+  .stl-item__media {
+    position: relative;
+    flex: none;
+  }
+
+  .stl-item__image {
+    display: block;
+    inline-size: 56px;
+    block-size: 56px;
+    border-radius: 10px;
+    background: var(--stl-sand);
+    object-fit: cover;
+  }
+
+  .stl-item__number {
+    position: absolute;
+    inset-block-start: -6px;
+    inset-inline-start: -6px;
+    display: grid;
+    place-items: center;
+    inline-size: 20px;
+    block-size: 20px;
+    border-radius: 50%;
+    background: var(--stl-ink);
+    color: var(--stl-paper);
+    font-size: 0.6875rem;
+    font-weight: 700;
+  }
+
+  .stl-item__text {
+    display: grid;
+    gap: 1px;
+    min-width: 0;
+  }
+
+  .stl-item__title {
+    font-weight: 600;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+
+  .stl-item__variant {
+    color: var(--stl-muted);
+    font-size: 0.8125rem;
+  }
+
+  .stl-item__price {
+    font-size: 0.875rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stl-item__price s {
+    margin-inline-start: 6px;
+    color: var(--stl-muted);
+  }
+
+  .stl-item__actions {
+    display: grid;
+    justify-items: end;
+    gap: 4px;
+  }
+
+  .stl-item__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--stl-success);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .stl-item__badge[hidden] {
+    display: none;
+  }
+
+  .stl-item__badge[data-tone='muted'] {
+    color: var(--stl-muted);
+  }
+
+  .stl-item__badge .stl-icon {
+    inline-size: 12px;
+    block-size: 12px;
+  }
+
+  .stl-item__add {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-block-size: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--stl-line-strong);
+    border-radius: 999px;
+    background: var(--stl-paper);
+    color: var(--stl-ink);
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .stl-item__add:hover:not(:disabled) {
+    border-color: var(--stl-ink);
+  }
+
+  .stl-item__add:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+
+  .stl-item__add .stl-icon {
+    inline-size: 12px;
+    block-size: 12px;
+  }
+
+  @keyframes stl-card-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.98);
+    }
+  }
+
+  @keyframes stl-sheet-in {
+    from {
+      transform: translateY(100%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stl-card[data-mode='popover'],
+    .stl-card[data-mode='sheet'] {
+      animation: none;
+    }
+
+    .stl-item {
+      transition: none;
+    }
+  }
+{% endstylesheet %}

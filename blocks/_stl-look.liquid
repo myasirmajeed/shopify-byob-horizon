@@ -1,0 +1,190 @@
+{% doc %}
+  One look inside the Shop the Look section: a lifestyle image whose nested
+  `_stl-hotspot` blocks are positioned over it, plus a product panel. The product
+  list and look total are rendered by `<stl-looks-component>` from the hotspot data.
+{% enddoc %}
+
+{%- liquid
+  assign image = block.settings.image
+  assign is_first = false
+  if section.blocks.first.id == block.id
+    assign is_first = true
+  endif
+  assign title = block.settings.title | default: 'Look'
+-%}
+
+<section
+  class="stl-look"
+  id="StlLook-{{ block.id }}"
+  data-look="{{ block.id }}"
+  role="tabpanel"
+  aria-labelledby="StlTab-{{ block.id }}"
+  {% unless is_first %}
+    hidden
+  {% endunless %}
+  {{ block.shopify_attributes }}
+>
+  <div class="stl-look__media" data-look-media style="--stl-ratio: {{ image.aspect_ratio | default: 1.5 }};">
+    {%- if image != blank -%}
+      {%- liquid
+        if is_first
+          assign loading = 'eager'
+          assign priority = 'high'
+        else
+          assign loading = 'lazy'
+          assign priority = 'auto'
+        endif
+      -%}
+      {{
+        image
+        | image_url: width: 2400
+        | image_tag:
+          widths: '600, 900, 1200, 1600, 2000, 2400',
+          sizes: '(min-width: 1200px) 760px, (min-width: 990px) 62vw, 100vw',
+          loading: loading,
+          fetchpriority: priority,
+          class: 'stl-look__image',
+          alt: image.alt
+      }}
+    {%- else -%}
+      {{ 'lifestyle-1' | placeholder_svg_tag: 'stl-look__image stl-look__image--placeholder' }}
+    {%- endif -%}
+    <div class="stl-look__hotspots">
+      {%- content_for 'blocks' -%}
+    </div>
+  </div>
+
+  <div class="stl-look__panel">
+    <header class="stl-look__header">
+      <h2 class="stl-look__title">{{ title | escape }}</h2>
+      {%- if block.settings.description != blank -%}
+        <p class="stl-look__description">{{ block.settings.description | escape }}</p>
+      {%- endif -%}
+    </header>
+
+    <h3 class="stl-list__heading" id="StlListHeading-{{ block.id }}">{{ 'stl.list_heading' | t }}</h3>
+    <ol class="stl-list" role="list" data-look-list aria-labelledby="StlListHeading-{{ block.id }}"></ol>
+
+    {%- if section.settings.show_add_all -%}
+      <div class="stl-addall" data-look-addall>
+        <div class="stl-addall__summary">
+          <span class="stl-addall__label">{{ 'stl.look_total' | t }}</span>
+          <span class="stl-addall__total" data-look-total></span>
+        </div>
+        <button type="button" class="stl-button stl-button--primary stl-addall__button" data-look-addall-button on:click="/addAll">
+          {%- render 'stl-icon', name: 'cart' -%}
+          <span data-look-addall-label>{{ 'stl.add_all' | t }}</span>
+        </button>
+        <p class="stl-addall__status" data-look-addall-status hidden></p>
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+
+{% stylesheet %}
+  .stl-look {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(20px, 3vw, 40px);
+    align-items: start;
+    animation: stl-fade-in 320ms var(--stl-ease);
+  }
+
+  .stl-look[hidden] {
+    display: none;
+  }
+
+  @media screen and (min-width: 990px) {
+    .stl-look {
+      grid-template-columns: minmax(0, 1.75fr) minmax(320px, 1fr);
+    }
+  }
+
+  .stl-look__media {
+    position: relative;
+    min-width: 0;
+    aspect-ratio: var(--stl-ratio);
+    overflow: hidden;
+    border-radius: var(--stl-radius-lg);
+    background: var(--stl-sand);
+  }
+
+  .stl-look__image {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .stl-look__hotspots {
+    position: absolute;
+    inset: 0;
+  }
+
+  .stl-look__panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    min-width: 0;
+  }
+
+  @media screen and (min-width: 990px) {
+    .stl-look__panel {
+      position: sticky;
+      inset-block-start: calc(var(--header-height, 0px) + 20px);
+    }
+  }
+
+  .stl-look__header {
+    display: grid;
+    gap: 6px;
+  }
+
+  .stl-look__title {
+    margin: 0;
+    font-family: var(--stl-serif);
+    font-size: clamp(1.5rem, 2.6vw, 2rem);
+    font-weight: 500;
+    line-height: 1.15;
+  }
+
+  .stl-look__description {
+    margin: 0;
+    color: var(--stl-muted);
+    line-height: 1.55;
+  }
+
+  .stl-list__heading {
+    margin: 6px 0 0;
+    color: var(--stl-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  @keyframes stl-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stl-look {
+      animation: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:stl.look",
+  "blocks": [{ "type": "_stl-hotspot" }],
+  "settings": [
+    { "type": "text", "id": "title", "label": "t:stl.title", "default": "Modern Living Room" },
+    { "type": "text", "id": "description", "label": "t:stl.description" },
+    { "type": "image_picker", "id": "image", "label": "t:stl.image", "info": "t:stl.image_info" }
+  ]
+}
+{% endschema %}

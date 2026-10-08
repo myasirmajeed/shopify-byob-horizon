@@ -1,0 +1,47 @@
+{% doc %}
+  Outputs one product as JSON for the Shop the Look component: options, every
+  variant (price, compare-at price, availability, image) and an optional rating
+  from the standard `reviews.rating` metafield. Rendered inside a
+  `<script type="application/json">` by `blocks/_stl-hotspot.liquid`.
+
+  @param {object} product - The hotspot's product
+  @param {string} [label] - The hotspot label
+
+  @example
+  {% render 'stl-product-json', product: block.settings.product, label: block.settings.label %}
+{% enddoc %}
+
+{%- liquid
+  assign rating = product.metafields.reviews.rating.value
+  assign rating_count = product.metafields.reviews.rating_count.value
+-%}
+{
+  "id": {{ product.id | json }},
+  "title": {{ product.title | json }},
+  "label": {{ label | default: product.title | json }},
+  "url": {{ product.url | json }},
+  "description": {{ product.description | strip_html | strip_newlines | truncatewords: 26 | json }},
+  "image": {% if product.featured_image %}{{ product.featured_image | image_url: width: 640 | json }}{% else %}null{% endif %},
+  "imageAlt": {{ product.featured_image.alt | default: product.title | json }},
+  "available": {{ product.available | json }},
+  "hasOnlyDefaultVariant": {{ product.has_only_default_variant | json }},
+  "rating": {% if rating %}{ "value": {{ rating.rating | json }}, "scale": {{ rating.scale_max | json }}, "count": {{ rating_count | default: 0 | json }} }{% else %}null{% endif %},
+  "options": [
+    {%- for option in product.options_with_values -%}
+      { "name": {{ option.name | json }}, "values": {{ option.values | json }} }{%- unless forloop.last -%},{%- endunless -%}
+    {%- endfor -%}
+  ],
+  "variants": [
+    {%- for variant in product.variants -%}
+      {
+        "id": {{ variant.id | json }},
+        "title": {{ variant.title | json }},
+        "options": {{ variant.options | json }},
+        "price": {{ variant.price | json }},
+        "compareAtPrice": {{ variant.compare_at_price | json }},
+        "available": {{ variant.available | json }},
+        "image": {% if variant.featured_image %}{{ variant.featured_image | image_url: width: 640 | json }}{% else %}null{% endif %}
+      }{%- unless forloop.last -%},{%- endunless -%}
+    {%- endfor -%}
+  ]
+}

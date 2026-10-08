@@ -1292,5 +1292,22 @@
     "option_value": "Color option value",
     "swatch_color": "Swatch color",
     "ink_color": "Lettering color on this box"
+  },
+  "stl": {
+    "name": "Shop the look",
+    "look": "Look",
+    "hotspot": "Hotspot",
+    "heading": "Heading",
+    "intro": "Introduction",
+    "show_add_all": "Show \"Add all to cart\"",
+    "title": "Look title",
+    "description": "Look description",
+    "image": "Lifestyle image",
+    "image_info": "Use a landscape image. Hotspot positions are percentages of this image.",
+    "product": "Product",
+    "x_position": "Horizontal position",
+    "y_position": "Vertical position",
+    "label": "Label",
+    "label_info": "Short name shown next to the hotspot on desktop, for example \"Sofa\"."
   }
 }

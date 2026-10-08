@@ -579,5 +579,57 @@
     "property_for": "Added to",
     "no_product": "Select the gift box product in the theme editor.",
     "no_js": "Turn on JavaScript to personalize this product."
+  },
+  "stl": {
+    "looks_label": "Choose a look",
+    "look_number": "Look {{ number }}",
+    "look_count": {
+      "one": "1 piece",
+      "other": "{{ count }} pieces"
+    },
+    "hotspot_label": "Show {{ product }}",
+    "list_heading": "Shop the look",
+    "list_label": "Products in this look",
+    "include": "Include {{ product }} in Add all",
+    "view": "View",
+    "view_product": "View details for {{ product }}",
+    "add": "Add",
+    "add_product": "Add {{ product }} to cart",
+    "added": "Added",
+    "sold_out": "Sold out",
+    "unavailable": "Unavailable",
+    "sale": "Sale",
+    "regular_price": "Regular price",
+    "sale_price": "Sale price",
+    "rating": "Rated {{ rating }} out of 5",
+    "rating_count": {
+      "one": "1 review",
+      "other": "{{ count }} reviews"
+    },
+    "quantity": "Quantity",
+    "decrease": "Decrease quantity",
+    "increase": "Increase quantity",
+    "add_to_cart": "Add to cart",
+    "adding": "Adding…",
+    "added_to_cart": "Added to cart",
+    "view_cart": "View cart",
+    "full_details": "View full details",
+    "close": "Close",
+    "error": "Couldn’t add this item. Please try again.",
+    "add_all": "Add all to cart",
+    "add_all_selected": {
+      "one": "Add 1 item to cart",
+      "other": "Add {{ count }} items to cart"
+    },
+    "nothing_selected": "Select at least one available item.",
+    "adding_all": "Adding the look…",
+    "added_all": {
+      "one": "Added 1 item to your cart",
+      "other": "Added {{ count }} items to your cart"
+    },
+    "skipped": "Not added: {{ items }}",
+    "look_total": "Look total",
+    "placeholder_product": "Choose a product for this hotspot",
+    "no_looks": "Add a look block in the theme editor."
   }
 }

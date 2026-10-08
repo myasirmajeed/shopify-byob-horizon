@@ -1,0 +1,383 @@
+{% comment %}
+  Section contract.
+  Shop the Look: lifestyle images with product hotspots. Theme Editor tree:
+  section → `_stl-look` blocks (title, description, image) → `_stl-hotspot` blocks
+  (product, x, y, label). Customers open a product card from a hotspot or the
+  product list, pick a variant and quantity, and add one item or the whole look
+  through the AJAX Cart API. Namespaced `stl-` to stay isolated from other demos.
+  @example
+  <!-- Assigned through templates/page.stl.json on the /pages/shop-the-look page -->
+{% endcomment %}
+
+<div class="stl-section">
+  <stl-looks-component
+    class="stl"
+    data-money-format="{{ shop.money_format | strip_html | escape }}"
+    data-currency="{{ cart.currency.iso_code }}"
+  >
+    <header class="stl-header">
+      <h1 class="stl-header__title">{{ section.settings.heading | escape }}</h1>
+      {%- if section.settings.intro != blank -%}
+        <div class="stl-header__intro">{{ section.settings.intro }}</div>
+      {%- endif -%}
+    </header>
+
+    {%- if section.blocks.size == 0 -%}
+      <p class="stl-notice">{{ 'stl.no_looks' | t }}</p>
+    {%- endif -%}
+
+    {%- if section.blocks.size > 1 -%}
+      <div class="stl-tabs" role="tablist" aria-label="{{ 'stl.looks_label' | t }}" on:keydown="/handleTabKeydown">
+        {%- for look in section.blocks -%}
+          <button
+            type="button"
+            class="stl-tab"
+            role="tab"
+            id="StlTab-{{ look.id }}"
+            aria-controls="StlLook-{{ look.id }}"
+            aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+            tabindex="{% if forloop.first %}0{% else %}-1{% endif %}"
+            data-look-target="{{ look.id }}"
+            on:click="/selectLook"
+          >
+            {%- if look.settings.image != blank -%}
+              {{
+                look.settings.image
+                | image_url: width: 160, height: 160, crop: 'center'
+                | image_tag: class: 'stl-tab__thumb', loading: 'lazy', alt: '', width: 56, height: 56
+              }}
+            {%- endif -%}
+            <span class="stl-tab__text">
+              <span class="stl-tab__kicker">{{ 'stl.look_number' | t: number: forloop.index }}</span>
+              <span class="stl-tab__title">{{ look.settings.title | escape }}</span>
+            </span>
+          </button>
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+
+    <div class="stl-looks">
+      {%- content_for 'blocks' -%}
+    </div>
+
+    {%- render 'stl-dialog', section_id: section.id -%}
+
+    <p class="visually-hidden" role="status" aria-live="polite" data-stl-announcer></p>
+
+    <script type="application/json" data-stl-strings>
+      {
+        "view": {{ 'stl.view' | t | json }},
+        "viewProduct": {{ 'stl.view_product' | t: product: '[product]' | json }},
+        "add": {{ 'stl.add' | t | json }},
+        "addProduct": {{ 'stl.add_product' | t: product: '[product]' | json }},
+        "added": {{ 'stl.added' | t | json }},
+        "include": {{ 'stl.include' | t: product: '[product]' | json }},
+        "soldOut": {{ 'stl.sold_out' | t | json }},
+        "unavailable": {{ 'stl.unavailable' | t | json }},
+        "sale": {{ 'stl.sale' | t | json }},
+        "regularPrice": {{ 'stl.regular_price' | t | json }},
+        "salePrice": {{ 'stl.sale_price' | t | json }},
+        "rating": {{ 'stl.rating' | t: rating: '[rating]' | json }},
+        "ratingCountOne": {{ 'stl.rating_count.one' | t | json }},
+        "ratingCountOther": {{ 'stl.rating_count.other' | t: count: '[count]' | json }},
+        "addToCart": {{ 'stl.add_to_cart' | t | json }},
+        "adding": {{ 'stl.adding' | t | json }},
+        "addedToCart": {{ 'stl.added_to_cart' | t | json }},
+        "error": {{ 'stl.error' | t | json }},
+        "addAll": {{ 'stl.add_all' | t | json }},
+        "addAllSelectedOne": {{ 'stl.add_all_selected.one' | t | json }},
+        "addAllSelectedOther": {{ 'stl.add_all_selected.other' | t: count: '[count]' | json }},
+        "nothingSelected": {{ 'stl.nothing_selected' | t | json }},
+        "addingAll": {{ 'stl.adding_all' | t | json }},
+        "addedAllOne": {{ 'stl.added_all.one' | t | json }},
+        "addedAllOther": {{ 'stl.added_all.other' | t: count: '[count]' | json }},
+        "skipped": {{ 'stl.skipped' | t: items: '[items]' | json }},
+        "lookCountOne": {{ 'stl.look_count.one' | t | json }},
+        "lookCountOther": {{ 'stl.look_count.other' | t: count: '[count]' | json }}
+      }
+    </script>
+  </stl-looks-component>
+
+  <script src="{{ 'stl-looks.js' | asset_url }}" type="module" fetchpriority="low"></script>
+</div>
+
+{% stylesheet %}
+  /* Design tokens for Shop the Look, scoped to .stl-section. */
+  .stl-section {
+    --stl-ink: #171615;
+    --stl-muted: #5f5b55;
+    --stl-paper: #ffffff;
+    --stl-bg: #f6f4f0;
+    --stl-sand: #ebe6de;
+    --stl-line: rgb(23 22 21 / 0.12);
+    --stl-line-strong: rgb(23 22 21 / 0.28);
+    --stl-accent: #b4552d;
+    --stl-accent-soft: #f6e5dc;
+    --stl-success: #2e6a4c;
+    --stl-danger: #a8362a;
+    --stl-radius: 14px;
+    --stl-radius-lg: 22px;
+    --stl-shadow: 0 1px 2px rgb(23 22 21 / 0.06), 0 12px 32px rgb(23 22 21 / 0.12);
+    --stl-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+    --stl-serif: 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+    --stl-gutter: max(16px, var(--page-margin, 16px));
+
+    background: var(--stl-bg);
+    color: var(--stl-ink);
+    padding-block: clamp(24px, 4vw, 56px) clamp(32px, 6vw, 80px);
+  }
+
+  .stl {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(18px, 2.5vw, 28px);
+    max-width: 1320px;
+    margin-inline: auto;
+    padding-inline: var(--stl-gutter);
+  }
+
+  .stl *:focus-visible {
+    outline: 2px solid var(--stl-accent);
+    outline-offset: 3px;
+  }
+
+  .stl-header {
+    display: grid;
+    gap: 8px;
+    max-width: 680px;
+  }
+
+  .stl-header__title {
+    margin: 0;
+    font-family: var(--stl-serif);
+    font-size: clamp(2rem, 4.5vw, 3.25rem);
+    font-weight: 500;
+    line-height: 1.05;
+  }
+
+  .stl-header__intro {
+    color: var(--stl-muted);
+    line-height: 1.6;
+  }
+
+  .stl-header__intro > * {
+    margin: 0;
+  }
+
+  .stl-notice {
+    padding: 20px;
+    border: 1px dashed var(--stl-line-strong);
+    border-radius: var(--stl-radius);
+  }
+
+  /* Look switcher */
+  .stl-tabs {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 2px 2px 6px;
+    scrollbar-width: none;
+  }
+
+  .stl-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .stl-tab {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 10px;
+    min-block-size: 56px;
+    padding: 6px 16px 6px 6px;
+    border: 1px solid var(--stl-line);
+    border-radius: 999px;
+    background: var(--stl-paper);
+    color: var(--stl-ink);
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+    transition: border-color 160ms var(--stl-ease), box-shadow 160ms var(--stl-ease), background-color 160ms;
+  }
+
+  .stl-tab:hover {
+    border-color: var(--stl-line-strong);
+  }
+
+  .stl-tab[aria-selected='true'] {
+    border-color: var(--stl-ink);
+    box-shadow: inset 0 0 0 1px var(--stl-ink);
+  }
+
+  .stl-tab__thumb {
+    inline-size: 44px;
+    block-size: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .stl-tab__text {
+    display: grid;
+  }
+
+  .stl-tab__kicker {
+    color: var(--stl-muted);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .stl-tab__title {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* Shared buttons */
+  .stl-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-block-size: 48px;
+    padding: 0 20px;
+    border: 1px solid var(--stl-ink);
+    border-radius: 999px;
+    background: var(--stl-paper);
+    color: var(--stl-ink);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 160ms var(--stl-ease), color 160ms var(--stl-ease), transform 160ms var(--stl-ease);
+  }
+
+  .stl-button:hover:not(:disabled) {
+    background: var(--stl-ink);
+    color: var(--stl-paper);
+  }
+
+  .stl-button:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .stl-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+
+  .stl-button--primary {
+    background: var(--stl-ink);
+    color: var(--stl-paper);
+  }
+
+  .stl-button--primary:hover:not(:disabled) {
+    border-color: var(--stl-accent);
+    background: var(--stl-accent);
+  }
+
+  .stl-button .stl-icon,
+  .stl-icon {
+    inline-size: 16px;
+    block-size: 16px;
+    flex: none;
+  }
+
+  /* Add all bar */
+  .stl-addall {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px 16px;
+    padding: 16px;
+    border: 1px solid var(--stl-line);
+    border-radius: var(--stl-radius);
+    background: var(--stl-paper);
+  }
+
+  /* On phones the bar sticks to the bottom so the look stays one tap away. */
+  @media screen and (max-width: 989px) {
+    .stl-addall {
+      position: sticky;
+      inset-block-end: 0;
+      z-index: 4;
+      margin-inline: calc(-1 * var(--stl-gutter));
+      padding: 12px var(--stl-gutter) calc(12px + env(safe-area-inset-bottom, 0px));
+      border-width: 1px 0 0;
+      border-radius: 0;
+      box-shadow: 0 -10px 30px rgb(23 22 21 / 0.08);
+    }
+  }
+
+  .stl-addall__summary {
+    display: grid;
+  }
+
+  .stl-addall__label {
+    color: var(--stl-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .stl-addall__total {
+    font-family: var(--stl-serif);
+    font-size: 1.5rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stl-addall__status {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 0.875rem;
+  }
+
+  .stl-addall__status[hidden] {
+    display: none;
+  }
+
+  .stl-addall__status[data-tone='success'] {
+    color: var(--stl-success);
+  }
+
+  .stl-addall__status[data-tone='error'] {
+    color: var(--stl-danger);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stl-tab,
+    .stl-button {
+      transition: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:stl.name",
+  "tag": "section",
+  "class": "stl-shopify-section",
+  "blocks": [{ "type": "_stl-look" }],
+  "settings": [
+    { "type": "text", "id": "heading", "label": "t:stl.heading", "default": "Shop the look" },
+    { "type": "richtext", "id": "intro", "label": "t:stl.intro" },
+    { "type": "checkbox", "id": "show_add_all", "label": "t:stl.show_add_all", "default": true }
+  ],
+  "presets": [
+    {
+      "name": "t:stl.name",
+      "category": "t:categories.products",
+      "blocks": [
+        {
+          "type": "_stl-look",
+          "blocks": [
+            { "type": "_stl-hotspot", "settings": { "x_position": 35, "y_position": 60 } },
+            { "type": "_stl-hotspot", "settings": { "x_position": 70, "y_position": 30 } }
+          ]
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
