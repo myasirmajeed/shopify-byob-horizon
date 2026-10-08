@@ -50,6 +50,14 @@ available on request.
 Four shoppable room scenes. Each hotspot opens a product card; every product in the look can be added
 individually or all at once.
 
+<p>
+  <img src="docs/screenshots/shop-the-look-desktop.jpg" alt="Shop the Look on desktop: living room scene with a product popover beside its hotspot and the synced product list" width="68%">
+</p>
+<p>
+  <img src="docs/screenshots/shop-the-look-mobile.jpg" alt="Shop the Look on mobile: numbered hotspots on the room photo and a sticky Add all bar" width="28%">
+  <img src="docs/screenshots/shop-the-look-mobile-card.jpg" alt="Shop the Look on mobile: product bottom sheet with sale price, variant pills, quantity and Add to cart" width="28%">
+</p>
+
 **Theme editor structure**
 ```
 Shop the Look section        heading, intro, "show Add all"
