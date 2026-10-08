@@ -1,15 +1,16 @@
 # Shopify Horizon Customizations — Portfolio
 
-**Three production-style storefront features built on Shopify's Horizon theme (Online Store 2.0)** —
+**Four production-style storefront features built on Shopify's Horizon theme (Online Store 2.0)** —
 written in Liquid, vanilla JavaScript (ES modules) and CSS, with no apps and no external libraries.
 
 By **Yasir Majeed** · Shopify developer
 
 | Demo | What it shows | Live URL* |
 | --- | --- | --- |
-| [Product Personalizer](#1-product-personalizer) | Live SVG product preview, variant logic, add-on products, validation | `/pages/custom-gift-box` |
-| [Build Your Own Box — Chocolate](#2-build-your-own-box--four-step-chocolate-builder) | Four-step builder, state persistence, filters, honest pricing | `/pages/build-your-own-box-2` |
-| [Build Your Own Box — Classic](#3-build-your-own-box--single-page-builder) | Single-page bundle builder with min/max rules | `/products/build-your-own-box` |
+| [Shop the Look](#1-shop-the-look) | Lifestyle images with product hotspots, variant-aware quick add, add the whole look | `/pages/shop-the-look` |
+| [Product Personalizer](#2-product-personalizer) | Live SVG product preview, variant logic, add-on products, validation | `/pages/custom-gift-box` |
+| [Build Your Own Box — Chocolate](#3-build-your-own-box--four-step-chocolate-builder) | Four-step builder, state persistence, filters, honest pricing | `/pages/build-your-own-box-2` |
+| [Build Your Own Box — Classic](#4-build-your-own-box--single-page-builder) | Single-page bundle builder with min/max rules | `/products/build-your-own-box` |
 
 \* Store: `yasir-demo-lab.myshopify.com` — a password-protected development store. The password is
 available on request.
@@ -19,9 +20,10 @@ available on request.
 ## Contents
 
 - [Tech stack](#tech-stack)
-- [1. Product Personalizer](#1-product-personalizer)
-- [2. Build Your Own Box — four-step chocolate builder](#2-build-your-own-box--four-step-chocolate-builder)
-- [3. Build Your Own Box — single-page builder](#3-build-your-own-box--single-page-builder)
+- [1. Shop the Look](#1-shop-the-look)
+- [2. Product Personalizer](#2-product-personalizer)
+- [3. Build Your Own Box — four-step chocolate builder](#3-build-your-own-box--four-step-chocolate-builder)
+- [4. Build Your Own Box — single-page builder](#4-build-your-own-box--single-page-builder)
 - [Engineering decisions](#engineering-decisions)
 - [Project structure](#project-structure)
 - [Running it yourself](#running-it-yourself)
@@ -43,7 +45,43 @@ available on request.
 
 ---
 
-## 1. Product Personalizer
+## 1. Shop the Look
+
+Four shoppable room scenes. Each hotspot opens a product card; every product in the look can be added
+individually or all at once.
+
+**Theme editor structure**
+```
+Shop the Look section        heading, intro, "show Add all"
+└─ Look (theme block)        title, description, image, image alt
+   └─ Hotspot (theme block)  product, X %, Y %, label
+```
+Merchants add looks and hotspots like any other block, with no code involved. Positions are percentages, so hotspots stay
+on their object at every screen size.
+
+**Features**
+- **Look switcher**: a tablist with thumbnails, arrow, Home and End keys, built from the look blocks.
+- **Hotspots**: pulsing markers, numbered on mobile, labelled on desktop; each is a real `<button>` with
+  `aria-expanded`.
+- **Product card**: image, sale and compare-at price, rating (from the `reviews.rating` metafield when it
+  exists; never faked), description, variant pills that mark sold-out combinations, quantity and Add to cart.
+  It is a popover beside the hotspot on desktop and a modal bottom sheet on mobile, using a native `<dialog>`
+  with Esc to close and focus returned to the opener.
+- **Synced product list**: selecting a hotspot highlights its list row and vice versa; variant and quantity
+  changes appear in both places; each row has View and Add.
+- **Add all to cart**: one request for every checked, available item, using its chosen variant and quantity.
+  Sold-out items are skipped and named in the result ("Added 3 items to your cart. Not added: Concrete Cube
+  Side Table").
+- **Look total** that updates with variant, quantity and include/exclude changes.
+
+**How the cart works**
+All items go to `/cart/add.js` in a single `items` request. If that fails (for example one item ran out of
+stock in the meantime), each item is retried on its own, so the available ones still get added and the
+failures are reported. Horizon's `CartLinesUpdateEvent` then refreshes the cart drawer and cart count.
+
+---
+
+## 2. Product Personalizer
 
 A customer designs a gift box and sees it update instantly.
 
@@ -71,7 +109,7 @@ lines store `Added to: Custom Gift Box (Rose / Large)`; every line shares a hidd
 
 ---
 
-## 2. Build Your Own Box — four-step chocolate builder
+## 3. Build Your Own Box — four-step chocolate builder
 
 Choose a box → choose flavors → choose a sleeve → review → add to cart.
 
@@ -100,7 +138,7 @@ stored as line-item properties (`Total pieces`, `Flavor 1: Dark Sea Salt Caramel
 
 ---
 
-## 3. Build Your Own Box — single-page builder
+## 4. Build Your Own Box — single-page builder
 
 <img src="docs/screenshots/byob1-desktop.jpg" alt="Single-page box builder with box sizes, product grid and summary sidebar" width="68%">
 
@@ -117,7 +155,7 @@ stored as line-item properties (`Total pieces`, `Flavor 1: Dark Sea Salt Caramel
 (box size × sleeve, style × color × size) and add-on products added as linked cart lines. The number shown on
 the page is always the number in the cart — no front-end-only prices.
 
-**Isolation.** Each feature has its own namespace (`byob-`, `yb2-`, `pz-`) across sections, snippets, CSS classes,
+**Isolation.** Each feature has its own namespace (`byob-`, `yb2-`, `pz-`, `stl-`) across sections, snippets, CSS classes,
 custom elements, data attributes, localStorage keys and locale keys. Shared theme files are only touched
 additively (import-map entries in `snippets/scripts.liquid`, new namespaces in `locales/en.default*.json`).
 
@@ -145,16 +183,21 @@ debounced search; requests aborted when components disconnect.
 
 ```
 assets/
+  stl-model.js stl-card.js   stl-cart.js stl-looks.js           # Shop the Look
   pz-model.js  pz-preview.js  pz-cart.js  pz-customizer.js     # Product Personalizer
   yb2-model.js yb2-store.js   yb2-view.js yb2-cart.js yb2-builder.js   # BYOB 2
   byob-builder.js                                              # BYOB 1
 sections/
+  stl-shop-the-look.liquid
   pz-customizer.liquid  yb2-builder.liquid  byob-builder.liquid
+blocks/
+  _stl-look.liquid  _stl-hotspot.liquid                         # nested theme blocks
 snippets/
-  pz-*.liquid  yb2-*.liquid  byob-*.liquid
+  stl-*.liquid  pz-*.liquid  yb2-*.liquid  byob-*.liquid
 templates/
-  page.pz.json  page.yb2.json  product.byob.json
+  page.stl.json  page.pz.json  page.yb2.json  product.byob.json
 data/
+  stl-products.csv  make-stl-data.js  add-stl-locales.js
   pz-products.csv  yb2-products.csv  make-pz-products.js  add-pz-locales.js
 docs/screenshots/                                              # images in this README
 ```
@@ -170,8 +213,10 @@ Everything else is the stock Horizon 4.2.0 theme (first commit), kept so the rep
    shopify theme push --store <your-store>.myshopify.com --unpublished
    ```
 2. **Import the demo products** from *Products → Import*:
-   `data/yb2-products.csv` (chocolate box + 12 flavors) and `data/pz-products.csv` (gift box + 3 add-ons).
-3. **Create the pages** and assign their templates: `pz` → `/pages/custom-gift-box`, `yb2` →
+   `data/yb2-products.csv` (chocolate box + 12 flavors), `data/pz-products.csv` (gift box + 3 add-ons) and
+   `data/stl-products.csv` (21 furniture and decor products). For Shop the Look, upload the four scene images to
+   *Content → Files* as `stl-look-living.jpg`, `stl-look-bedroom.jpg`, `stl-look-outdoor.jpg` and `stl-look-office.jpg`.
+3. **Create the pages** and assign their templates: `stl` → `/pages/shop-the-look`, `pz` → `/pages/custom-gift-box`, `yb2` →
    `/pages/build-your-own-box-2`. For BYOB 1, set a box product's theme template to `byob`.
 4. Adjust products, limits and copy in the theme editor.
 
@@ -195,6 +240,8 @@ added files.
   would merge them into a single bundle line; **Cart and Checkout Validation** could enforce the rules server-side.
 - Flavor inventory isn't decremented in BYOB 2 because flavors are stored as properties.
 - The personalizer preview is an illustration, not a print proof.
+- Shop the Look hotspot positions are set as numbers; a visual drag-to-place picker would need an app or
+  theme-editor extension.
 - Only English strings are included; other locales fall back to English.
 
 ---
@@ -207,4 +254,6 @@ added files.
   Ilya Mashkov, Massimo Adami, Jana Ohajdova, Monika Grabkowska, amirali mirhashemian, Ediglecio Lêla,
   Tetiana Bykovets, Büşra Salkım, Ioana Enescu, Hannah Dodwell, Elena Leya, Wijdan Mq, Ekaterina Shevchenko,
   Anastasiia Chepinska and Shamblen Studios.
+- Shop the Look scenes: free images from [Unsplash](https://unsplash.com/license) by Sven Brandsma,
+  Collov Home Design, Sergej and Arthur Lambillotte; product photos are crops of those scenes.
 - Gift box preview, truffle and sleeve illustrations: original SVG artwork.

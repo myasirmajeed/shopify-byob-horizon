@@ -44,7 +44,7 @@ class StlLooksComponent extends Component {
   #activeId = null;
   /** @type {HTMLElement | null} */
   #opener = null;
-  #returnFocus = true;
+  /** Close events triggered by the component itself, still to arrive. */
   #busy = false;
   /** @type {AbortController | null} */
   #listeners = null;
@@ -77,7 +77,7 @@ class StlLooksComponent extends Component {
             ?.firstElementChild
         );
         if (!listItem) continue;
-        listItem.dataset.hotspot = id;
+        listItem.dataset.itemId = id;
         list?.append(listItem);
 
         const variant = defaultVariant(product);
@@ -100,6 +100,7 @@ class StlLooksComponent extends Component {
       this.#renderTotal(lookId);
     }
 
+    this.#buildTabs();
     this.#dialog?.addEventListener('close', this.#handleDialogClose);
     this.#listeners = new AbortController();
     const { signal } = this.#listeners;
@@ -117,6 +118,64 @@ class StlLooksComponent extends Component {
   }
 
   /* ---------------- Look switching ---------------- */
+
+  /**
+   * Builds the ARIA tabs from the look blocks. Nested theme-block settings can't
+   * be read from the section in Liquid, so each look exposes its title and
+   * thumbnail as data attributes instead.
+   */
+  #buildTabs() {
+    const tablist = this.querySelector('[data-stl-tabs]');
+    const looks = [...this.querySelectorAll('[data-look]')].filter((l) => l instanceof HTMLElement);
+    if (!(tablist instanceof HTMLElement)) return;
+    if (looks.length < 2) {
+      // A single look is not a tab set.
+      for (const look of looks) {
+        look.removeAttribute('role');
+        look.removeAttribute('aria-labelledby');
+      }
+      return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    looks.forEach((look, index) => {
+      const id = look.dataset.look ?? '';
+      const tab = document.createElement('button');
+      tab.type = 'button';
+      tab.className = 'stl-tab';
+      tab.id = `StlTab-${id}`;
+      tab.setAttribute('role', 'tab');
+      tab.setAttribute('aria-controls', look.id);
+      tab.setAttribute('aria-selected', String(!look.hidden));
+      tab.tabIndex = look.hidden ? -1 : 0;
+      tab.dataset.lookTarget = id;
+      tab.setAttribute('on:click', '/selectLook');
+
+      if (look.dataset.lookThumb) {
+        const img = document.createElement('img');
+        img.className = 'stl-tab__thumb';
+        img.src = look.dataset.lookThumb;
+        img.alt = '';
+        img.width = 56;
+        img.height = 56;
+        img.loading = 'lazy';
+        tab.append(img);
+      }
+      const text = document.createElement('span');
+      text.className = 'stl-tab__text';
+      const kicker = document.createElement('span');
+      kicker.className = 'stl-tab__kicker';
+      kicker.textContent = fill(this.#strings.lookNumber, { number: index + 1 });
+      const title = document.createElement('span');
+      title.className = 'stl-tab__title';
+      title.textContent = look.dataset.lookTitle ?? '';
+      text.append(kicker, title);
+      tab.append(text);
+      fragment.append(tab);
+    });
+    tablist.replaceChildren(fragment);
+    tablist.hidden = false;
+  }
 
   /** @param {Event} event */
   selectLook(event) {
@@ -197,7 +256,6 @@ class StlLooksComponent extends Component {
 
     this.#activeId = id;
     this.#opener = opener ?? item.hotspot;
-    this.#returnFocus = true;
     this.#setActive(id);
     this.#hideStatus();
     this.#renderCard(item);
@@ -494,22 +552,34 @@ class StlLooksComponent extends Component {
 
   /* ---------------- Dialog lifecycle ---------------- */
 
-  /** @param {boolean} returnFocus */
+  /**
+   * Closes the card and cleans up synchronously. The native `close` event fires
+   * asynchronously, so it is only acted on while the card is still closed and
+   * still has an active item (a native Escape close on the modal sheet).
+   * @param {boolean} returnFocus
+   */
   #close(returnFocus) {
     if (!this.#dialog?.open) return;
-    this.#returnFocus = returnFocus;
     this.#dialog.close();
+    this.#afterClose(returnFocus);
   }
 
+  /** Native closes (Escape on the modal sheet) arrive here. */
   #handleDialogClose = () => {
+    if (this.#dialog?.open || this.#activeId === null) return;
+    this.#afterClose(true);
+  };
+
+  /** @param {boolean} returnFocus */
+  #afterClose(returnFocus) {
     const item = this.#activeItem();
     if (item) {
       item.hotspot.setAttribute('aria-expanded', 'false');
       item.hotspot.removeAttribute('data-active');
     }
-    if (this.#returnFocus && this.#opener?.isConnected) this.#opener.focus({ preventScroll: true });
+    if (returnFocus && this.#opener?.isConnected) this.#opener.focus({ preventScroll: true });
     this.#activeId = null;
-  };
+  }
 
   /** @param {KeyboardEvent} event */
   #handleKeydown = (event) => {
@@ -568,7 +638,7 @@ class StlLooksComponent extends Component {
   /** @param {Event} event */
   #itemFromEvent(event) {
     const li = event.target instanceof Element ? event.target.closest('[data-item]') : null;
-    return li instanceof HTMLElement ? this.#items.get(li.dataset.hotspot ?? '') ?? null : null;
+    return li instanceof HTMLElement ? this.#items.get(li.dataset.itemId ?? '') ?? null : null;
   }
 
   /** @param {string} lookId */

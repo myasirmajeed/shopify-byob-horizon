@@ -1304,6 +1304,8 @@
     "description": "Look description",
     "image": "Lifestyle image",
     "image_info": "Use a landscape image. Hotspot positions are percentages of this image.",
+    "image_alt": "Image description",
+    "image_alt_info": "Describes the scene for screen readers. Defaults to the image alt text.",
     "product": "Product",
     "x_position": "Horizontal position",
     "y_position": "Vertical position",

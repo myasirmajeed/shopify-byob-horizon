@@ -18,7 +18,7 @@ const scenes = {
 // soldOut(optionValues) marks tracked variants with 0 stock.
 const looks = [
   {
-    key: 'living', title: 'Modern Living Room',
+    key: 'living', title: 'Modern Living Room', alt: 'Living room with a charcoal corner sofa, floor lamp, nesting coffee tables and a chevron rug',
     description: 'A relaxed corner sofa, nesting tables and soft texture underfoot.',
     products: [
       { handle: 'stl-harbor-corner-sofa', title: 'Harbor Corner Sofa', type: 'Sofas', label: 'Sofa', x: 42, y: 52, crop: [8, 36, 72, 40],
@@ -39,7 +39,7 @@ const looks = [
     ],
   },
   {
-    key: 'bedroom', title: 'Minimal Bedroom',
+    key: 'bedroom', title: 'Minimal Bedroom', alt: 'Bright bedroom with a linen-dressed bed, patterned throw, rattan pendant, globe lamp and woven pouf',
     description: 'Washed linen, natural rattan and calm, sculptural shapes.',
     products: [
       { handle: 'stl-rattan-dome-pendant', title: 'Rattan Dome Pendant', type: 'Lighting', label: 'Pendant', x: 57, y: 16, crop: [45, 0, 24, 31],
@@ -59,7 +59,7 @@ const looks = [
     ],
   },
   {
-    key: 'outdoor', title: 'Outdoor Lounge',
+    key: 'outdoor', title: 'Outdoor Lounge', alt: 'Covered garden patio with a white loveseat, lounge chair, slatted coffee table and cube side table',
     description: 'Weather-ready seating for long evenings in the garden.',
     products: [
       { handle: 'stl-coastline-outdoor-loveseat', title: 'Coastline Outdoor Loveseat', type: 'Outdoor', label: 'Loveseat', x: 57, y: 53, crop: [43, 43, 27, 24],
@@ -75,7 +75,7 @@ const looks = [
     ],
   },
   {
-    key: 'office', title: 'Home Office',
+    key: 'office', title: 'Home Office', alt: 'Attic home office with a mesh task chair, sit-stand desk, framed print and a snake plant on a walnut stand',
     description: 'An ergonomic set-up under the eaves, warmed by walnut and greenery.',
     products: [
       { handle: 'stl-mesh-task-chair', title: 'Mesh Task Chair', type: 'Office', label: 'Task chair', x: 31, y: 50, crop: [17, 38, 31, 60],
@@ -166,7 +166,7 @@ for (const look of looks) {
   }
   blocks[id] = {
     type: '_stl-look',
-    settings: { title: look.title, description: look.description, image: `shopify://shop_images/${scenes[look.key].file}` },
+    settings: { title: look.title, description: look.description, image_alt: look.alt, image: `shopify://shop_images/${scenes[look.key].file}` },
     blocks: children,
     block_order: childOrder,
   };

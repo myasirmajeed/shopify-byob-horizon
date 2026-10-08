@@ -8,6 +8,7 @@
           "settings": {
             "title": "Modern Living Room",
             "description": "A relaxed corner sofa, nesting tables and soft texture underfoot.",
+            "image_alt": "Living room with a charcoal corner sofa, floor lamp, nesting coffee tables and a chevron rug",
             "image": "shopify://shop_images/stl-look-living.jpg"
           },
           "blocks": {
@@ -80,6 +81,7 @@
           "settings": {
             "title": "Minimal Bedroom",
             "description": "Washed linen, natural rattan and calm, sculptural shapes.",
+            "image_alt": "Bright bedroom with a linen-dressed bed, patterned throw, rattan pendant, globe lamp and woven pouf",
             "image": "shopify://shop_images/stl-look-bedroom.jpg"
           },
           "blocks": {
@@ -152,6 +154,7 @@
           "settings": {
             "title": "Outdoor Lounge",
             "description": "Weather-ready seating for long evenings in the garden.",
+            "image_alt": "Covered garden patio with a white loveseat, lounge chair, slatted coffee table and cube side table",
             "image": "shopify://shop_images/stl-look-outdoor.jpg"
           },
           "blocks": {
@@ -204,6 +207,7 @@
           "settings": {
             "title": "Home Office",
             "description": "An ergonomic set-up under the eaves, warmed by walnut and greenery.",
+            "image_alt": "Attic home office with a mesh task chair, sit-stand desk, framed print and a snake plant on a walnut stand",
             "image": "shopify://shop_images/stl-look-office.jpg"
           },
           "blocks": {

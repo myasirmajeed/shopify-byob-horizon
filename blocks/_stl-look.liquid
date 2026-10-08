@@ -11,12 +11,17 @@
     assign is_first = true
   endif
   assign title = block.settings.title | default: 'Look'
+  assign image_alt = block.settings.image_alt | default: image.alt | default: title
 -%}
 
 <section
   class="stl-look"
   id="StlLook-{{ block.id }}"
   data-look="{{ block.id }}"
+  data-look-title="{{ title | escape }}"
+  {% if image != blank %}
+    data-look-thumb="{{ image | image_url: width: 160, height: 160, crop: 'center' }}"
+  {% endif %}
   role="tabpanel"
   aria-labelledby="StlTab-{{ block.id }}"
   {% unless is_first %}
@@ -44,7 +49,7 @@
           loading: loading,
           fetchpriority: priority,
           class: 'stl-look__image',
-          alt: image.alt
+          alt: image_alt
       }}
     {%- else -%}
       {{ 'lifestyle-1' | placeholder_svg_tag: 'stl-look__image stl-look__image--placeholder' }}
@@ -184,7 +189,8 @@
   "settings": [
     { "type": "text", "id": "title", "label": "t:stl.title", "default": "Modern Living Room" },
     { "type": "text", "id": "description", "label": "t:stl.description" },
-    { "type": "image_picker", "id": "image", "label": "t:stl.image", "info": "t:stl.image_info" }
+    { "type": "image_picker", "id": "image", "label": "t:stl.image", "info": "t:stl.image_info" },
+    { "type": "text", "id": "image_alt", "label": "t:stl.image_alt", "info": "t:stl.image_alt_info" }
   ]
 }
 {% endschema %}

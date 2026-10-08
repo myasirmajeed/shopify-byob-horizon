@@ -9,3 +9,8 @@ Thumbs.db
 
 # Dependencies (if tooling is added later)
 node_modules/
+
+# Leftovers copied from the old temporary workspace
+byob-theme/
+cli-login.log
+themecheck.json

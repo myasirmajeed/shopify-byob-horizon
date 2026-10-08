@@ -26,35 +26,8 @@
       <p class="stl-notice">{{ 'stl.no_looks' | t }}</p>
     {%- endif -%}
 
-    {%- if section.blocks.size > 1 -%}
-      <div class="stl-tabs" role="tablist" aria-label="{{ 'stl.looks_label' | t }}" on:keydown="/handleTabKeydown">
-        {%- for look in section.blocks -%}
-          <button
-            type="button"
-            class="stl-tab"
-            role="tab"
-            id="StlTab-{{ look.id }}"
-            aria-controls="StlLook-{{ look.id }}"
-            aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
-            tabindex="{% if forloop.first %}0{% else %}-1{% endif %}"
-            data-look-target="{{ look.id }}"
-            on:click="/selectLook"
-          >
-            {%- if look.settings.image != blank -%}
-              {{
-                look.settings.image
-                | image_url: width: 160, height: 160, crop: 'center'
-                | image_tag: class: 'stl-tab__thumb', loading: 'lazy', alt: '', width: 56, height: 56
-              }}
-            {%- endif -%}
-            <span class="stl-tab__text">
-              <span class="stl-tab__kicker">{{ 'stl.look_number' | t: number: forloop.index }}</span>
-              <span class="stl-tab__title">{{ look.settings.title | escape }}</span>
-            </span>
-          </button>
-        {%- endfor -%}
-      </div>
-    {%- endif -%}
+    {%- comment -%} Tabs are built from the look blocks by stl-looks.js (nested block settings are not readable here). {%- endcomment -%}
+    <div class="stl-tabs" role="tablist" aria-label="{{ 'stl.looks_label' | t }}" data-stl-tabs on:keydown="/handleTabKeydown" hidden></div>
 
     <div class="stl-looks">
       {%- content_for 'blocks' -%}
@@ -93,7 +66,8 @@
         "addedAllOther": {{ 'stl.added_all.other' | t: count: '[count]' | json }},
         "skipped": {{ 'stl.skipped' | t: items: '[items]' | json }},
         "lookCountOne": {{ 'stl.look_count.one' | t | json }},
-        "lookCountOther": {{ 'stl.look_count.other' | t: count: '[count]' | json }}
+        "lookCountOther": {{ 'stl.look_count.other' | t: count: '[count]' | json }},
+        "lookNumber": {{ 'stl.look_number' | t: number: '[number]' | json }}
       }
     </script>
   </stl-looks-component>
@@ -177,6 +151,10 @@
     overflow-x: auto;
     padding: 2px 2px 6px;
     scrollbar-width: none;
+  }
+
+  .stl-tabs[hidden] {
+    display: none;
   }
 
   .stl-tabs::-webkit-scrollbar {
