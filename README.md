@@ -53,7 +53,11 @@ A coffee shop ("Brew Bar") built to show a complete AJAX cart experience. Every 
 from Shopify's cart JSON — nothing is simulated in the browser.
 
 <p>
+  <img src="docs/screenshots/advanced-cart-page.jpg" alt="Brew Bar demo page with offer hints, a View cart button and product cards" width="45%">
   <img src="docs/screenshots/advanced-cart-drawer.jpg" alt="Cart drawer with free shipping unlocked, the free gift added, line items and the sticky checkout area" width="45%">
+</p>
+<p>
+  <img src="docs/screenshots/advanced-cart-upsells.jpg" alt="Cart drawer with the BREW10 code applied, the discount in the totals and Pairs well with suggestions" width="45%">
   <img src="docs/screenshots/advanced-cart-fbt.jpg" alt="Frequently bought together: four products with checkboxes, variant pickers and a combined price" width="45%">
 </p>
 
