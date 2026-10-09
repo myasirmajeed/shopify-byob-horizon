@@ -1,0 +1,66 @@
+{% doc %}
+  One row of the frequently-bought-together list: checkbox, title, price,
+  variant picker and the product JSON read by `<acx-fbt-component>`.
+
+  @param {object} product - Product for this row
+  @param {string} uid - Unique suffix for element IDs
+  @param {boolean} [main] - Whether this is the section's main product
+
+  @example
+  {% render 'acx-fbt-item', product: product, uid: section.id, main: true %}
+{% enddoc %}
+{%- liquid
+  assign item = product
+  assign variant = item.selected_or_first_available_variant
+-%}
+<li class="acx-fbt__item" data-fbt-item>
+  <input
+    class="acx-fbt__check"
+    type="checkbox"
+    id="AcxFbtCheck-{{ uid }}"
+    data-fbt-check
+    on:change="/toggleItem"
+    {% if item.available %}
+      checked
+    {% else %}
+      disabled
+    {% endif %}
+  >
+  <label class="acx-fbt__label" for="AcxFbtCheck-{{ uid }}">
+    {%- if main -%}
+      <span class="acx-fbt__this">{{ 'acx.fbt_this_item' | t }}</span>
+    {%- endif -%}
+    <span class="acx-fbt__name">{{ item.title | escape }}</span>
+  </label>
+  <span class="acx-fbt__price" data-fbt-price>{% render 'acx-price', variant: variant %}</span>
+  {%- unless item.has_only_default_variant -%}
+    <label class="visually-hidden" for="AcxFbtVariant-{{ uid }}">
+      {{- 'acx.options_for' | t: title: item.title -}}
+    </label>
+    <select class="acx-select acx-fbt__select" id="AcxFbtVariant-{{ uid }}" data-fbt-select on:change="/selectVariant">
+      {%- for option_variant in item.variants -%}
+        <option
+          value="{{ option_variant.id }}"
+          {% if option_variant.id == variant.id %}
+            selected
+          {% endif %}
+          {% unless option_variant.available %}
+            disabled
+          {% endunless %}
+        >
+          {%- if option_variant.available -%}
+            {{ option_variant.title | escape }}
+          {%- else -%}
+            {{ 'acx.variant_sold_out' | t: variant: option_variant.title }}
+          {%- endif -%}
+        </option>
+      {%- endfor -%}
+    </select>
+  {%- endunless -%}
+  {%- unless item.available -%}
+    <span class="acx-badge acx-badge--muted acx-fbt__badge">{{ 'acx.sold_out' | t }}</span>
+  {%- endunless -%}
+  <script type="application/json" data-fbt-product>
+    {% render 'acx-product-json', product: item %}
+  </script>
+</li>

@@ -1,0 +1,289 @@
+{% comment %}
+  Section contract.
+  Frequently bought together for the Advanced Cart demo: a main product plus
+  merchant-picked companions with checkboxes, variant pickers and a combined
+  price. "Add selected" adds every checked, available item in one AJAX Cart
+  API request, then opens the acx cart drawer.
+  @example
+  <!-- Assigned through templates/page.acx.json on the /pages/advanced-cart page -->
+{% endcomment %}
+
+{%- render 'acx-shared-styles' -%}
+{%- render 'acx-product-strings' -%}
+
+{%- liquid
+  assign main = section.settings.product
+  assign companions = section.settings.companions
+-%}
+
+<div class="acx-scope acx-fbt-wrap">
+  {%- if main == blank -%}
+    <p class="acx-fbt__notice">{{ 'acx.fbt_choose_product' | t }}</p>
+  {%- else -%}
+    <acx-fbt-component
+      class="acx-fbt"
+      data-money-format="{{ shop.money_format | strip_html | escape }}"
+      data-currency="{{ cart.currency.iso_code }}"
+    >
+      <header class="acx-fbt__header">
+        <h2 class="acx-fbt__title" id="AcxFbtTitle-{{ section.id }}">{{ section.settings.heading | escape }}</h2>
+        {%- if section.settings.text != blank -%}
+          <p class="acx-fbt__text">{{ section.settings.text | escape }}</p>
+        {%- endif -%}
+      </header>
+
+      <div class="acx-fbt__layout">
+        <ul class="acx-fbt__visual" role="list" aria-hidden="true">
+          {%- render 'acx-fbt-visual', product: main -%}
+          {%- for companion in companions limit: 3 -%}
+            {%- render 'acx-fbt-visual', product: companion -%}
+          {%- endfor -%}
+        </ul>
+
+        <div class="acx-fbt__panel">
+          <ul class="acx-fbt__list" role="list" aria-labelledby="AcxFbtTitle-{{ section.id }}">
+            {%- render 'acx-fbt-item', product: main, uid: section.id, main: true -%}
+            {%- for companion in companions limit: 3 -%}
+              {%- assign uid = section.id | append: '-' | append: forloop.index -%}
+              {%- render 'acx-fbt-item', product: companion, uid: uid, main: false -%}
+            {%- endfor -%}
+          </ul>
+
+          <div class="acx-fbt__summary">
+            <span>{{ 'acx.fbt_total' | t }}</span>
+            <strong class="acx-fbt__total" data-fbt-total></strong>
+          </div>
+          <button type="button" class="acx-btn acx-btn--primary acx-btn--block" data-fbt-add on:click="/addSelected">
+            {%- render 'acx-icon', name: 'cart' -%}
+            {%- assign item_count = companions.count | plus: 1 -%}
+            <span data-fbt-add-label>{{ 'acx.fbt_add_selected' | t: count: item_count }}</span>
+          </button>
+          <p class="acx-fbt__status" data-fbt-status role="status" hidden></p>
+        </div>
+      </div>
+    </acx-fbt-component>
+  {%- endif -%}
+</div>
+
+<script src="{{ 'acx-products.js' | asset_url }}" type="module" fetchpriority="low"></script>
+
+{% stylesheet %}
+  .acx-fbt-wrap {
+    max-width: 1320px;
+    margin-inline: auto;
+    padding: clamp(16px, 3vw, 32px) var(--acx-gutter) clamp(40px, 6vw, 80px);
+  }
+
+  .acx-fbt {
+    display: grid;
+    gap: 20px;
+    padding: clamp(18px, 3vw, 32px);
+    border-radius: 22px;
+    background: var(--acx-cream);
+  }
+
+  .acx-fbt__header {
+    display: grid;
+    gap: 6px;
+  }
+
+  .acx-fbt__title {
+    margin: 0;
+    font-family: var(--acx-serif);
+    font-size: clamp(1.5rem, 3vw, 2.125rem);
+    font-weight: 500;
+  }
+
+  .acx-fbt__text {
+    margin: 0;
+    color: var(--acx-muted);
+  }
+
+  .acx-fbt__layout {
+    display: grid;
+    gap: 24px;
+    align-items: center;
+  }
+
+  @media screen and (min-width: 990px) {
+    .acx-fbt__layout {
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 1fr);
+      gap: 40px;
+    }
+  }
+
+  .acx-fbt__visual {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .acx-fbt__visual-item {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    aspect-ratio: 1;
+    transition: opacity 200ms var(--acx-ease), filter 200ms;
+  }
+
+  .acx-fbt__visual-item + .acx-fbt__visual-item::before {
+    content: '+';
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: -5px;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    inline-size: 24px;
+    block-size: 24px;
+    border-radius: 50%;
+    background: var(--acx-paper);
+    box-shadow: var(--acx-shadow);
+    font-weight: 700;
+    transform: translate(-50%, -50%);
+  }
+
+  [dir='rtl'] .acx-fbt__visual-item + .acx-fbt__visual-item::before {
+    transform: translate(50%, -50%);
+  }
+
+  .acx-fbt__visual-item img,
+  .acx-fbt__visual-item svg {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    border-radius: var(--acx-radius);
+    background: var(--acx-sand);
+    object-fit: cover;
+  }
+
+  .acx-fbt__visual-item[data-muted] {
+    opacity: 0.35;
+    filter: grayscale(1);
+  }
+
+  .acx-fbt__panel {
+    display: grid;
+    gap: 14px;
+  }
+
+  .acx-fbt__list {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .acx-fbt__item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--acx-line);
+    border-radius: var(--acx-radius-sm);
+    background: var(--acx-paper);
+  }
+
+  .acx-fbt__item[data-selected] {
+    border-color: var(--acx-ink);
+  }
+
+  .acx-fbt__check {
+    inline-size: 20px;
+    block-size: 20px;
+    margin: 0;
+    accent-color: var(--acx-ink);
+  }
+
+  .acx-fbt__label {
+    display: grid;
+    min-width: 0;
+    cursor: pointer;
+  }
+
+  .acx-fbt__this {
+    color: var(--acx-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .acx-fbt__name {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .acx-fbt__price {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+    font-size: 0.9375rem;
+  }
+
+  .acx-fbt__select,
+  .acx-fbt__badge {
+    grid-column: 2 / -1;
+    justify-self: start;
+  }
+
+  .acx-fbt__summary {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding-block-start: 4px;
+  }
+
+  .acx-fbt__total {
+    font-family: var(--acx-serif);
+    font-size: 1.5rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .acx-fbt__status {
+    margin: 0;
+    font-size: 0.875rem;
+  }
+
+  .acx-fbt__status[data-tone='success'] {
+    color: var(--acx-success);
+  }
+
+  .acx-fbt__status[data-tone='error'] {
+    color: var(--acx-danger);
+  }
+
+  .acx-fbt__notice {
+    padding: 20px;
+    border: 1px dashed var(--acx-line-strong);
+    border-radius: var(--acx-radius);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .acx-fbt__visual-item {
+      transition: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:acx.fbt_name",
+  "tag": "section",
+  "class": "acx-shopify-section acx-shopify-section--fbt",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "t:acx.heading", "default": "Frequently bought together" },
+    { "type": "text", "id": "text", "label": "t:acx.text" },
+    { "type": "product", "id": "product", "label": "t:acx.fbt_product" },
+    { "type": "product_list", "id": "companions", "label": "t:acx.fbt_companions", "limit": 3 }
+  ],
+  "presets": [{ "name": "t:acx.fbt_name", "category": "t:categories.products" }]
+}
+{% endschema %}

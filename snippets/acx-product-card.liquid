@@ -1,0 +1,99 @@
+{% doc %}
+  Product card with a variant picker and add to cart for the Advanced Cart
+  demo. The form posts to `/cart/add` without JavaScript; with it,
+  `<acx-product-card-component>` adds through the AJAX Cart API and opens the
+  cart drawer.
+
+  @param {object} product - Product to show
+  @param {string} [sizes] - `sizes` attribute for the image
+  @param {boolean} [compact] - Smaller layout used inside the cart drawer
+  @param {string} [section_id] - Calling section's ID, keeps element IDs unique
+
+  @example
+  {% render 'acx-product-card', product: product, sizes: '(min-width: 990px) 25vw, 50vw' %}
+{% enddoc %}
+{%- liquid
+  assign variant = product.selected_or_first_available_variant
+  assign uid = product.id | append: '-' | append: section_id
+  if compact
+    assign uid = uid | append: '-compact'
+  endif
+  assign image = product.featured_image
+  assign sizes = sizes | default: '(min-width: 990px) 25vw, 50vw'
+-%}
+<acx-product-card-component
+  class="acx-card{% if compact %} acx-card--compact{% endif %}"
+  data-money-format="{{ shop.money_format | strip_html | escape }}"
+  data-currency="{{ cart.currency.iso_code }}"
+>
+  <a class="acx-card__media" href="{{ product.url }}" tabindex="-1" aria-hidden="true">
+    {%- if image != blank -%}
+      {{
+        image
+        | image_url: width: 900
+        | image_tag: widths: '240, 360, 480, 640, 900', sizes: sizes, loading: 'lazy', class: 'acx-card__image', alt: ''
+      }}
+    {%- else -%}
+      {{ 'product-1' | placeholder_svg_tag: 'acx-card__image acx-card__image--placeholder' }}
+    {%- endif -%}
+    {%- if product.compare_at_price > product.price and product.available -%}
+      <span class="acx-badge acx-badge--sale acx-card__badge">{{ 'acx.sale' | t }}</span>
+    {%- elsif product.available == false -%}
+      <span class="acx-badge acx-badge--muted acx-card__badge">{{ 'acx.sold_out' | t }}</span>
+    {%- endif -%}
+  </a>
+  <div class="acx-card__body">
+    <h3 class="acx-card__title">
+      <a href="{{ product.url }}">{{ product.title | escape }}</a>
+    </h3>
+    <p class="acx-card__price" data-card-price>
+      {%- render 'acx-price', variant: variant -%}
+    </p>
+    <form class="acx-card__form" method="post" action="{{ routes.cart_add_url }}" on:submit="/add">
+      {%- if product.has_only_default_variant -%}
+        <input type="hidden" name="id" value="{{ variant.id }}">
+      {%- else -%}
+        <label class="visually-hidden" for="AcxCardVariant-{{ uid }}">
+          {{- 'acx.options_for' | t: title: product.title -}}
+        </label>
+        <select class="acx-select" id="AcxCardVariant-{{ uid }}" name="id" on:change="/selectVariant">
+          {%- for option_variant in product.variants -%}
+            <option
+              value="{{ option_variant.id }}"
+              {% if option_variant.id == variant.id %}
+                selected
+              {% endif %}
+              {% unless option_variant.available %}
+                disabled
+              {% endunless %}
+            >
+              {%- if option_variant.available -%}
+                {{ option_variant.title | escape }}
+              {%- else -%}
+                {{ 'acx.variant_sold_out' | t: variant: option_variant.title }}
+              {%- endif -%}
+            </option>
+          {%- endfor -%}
+        </select>
+      {%- endif -%}
+      <input type="hidden" name="quantity" value="1">
+      <button
+        type="submit"
+        class="acx-btn acx-btn--primary acx-card__add"
+        data-card-add
+        {% unless variant.available %}
+          disabled
+        {% endunless %}
+      >
+        {%- render 'acx-icon', name: 'cart' -%}
+        <span data-card-add-label>
+          {%- if variant.available -%}{{ 'acx.add_to_cart' | t }}{%- else -%}{{ 'acx.sold_out' | t }}{%- endif -%}
+        </span>
+      </button>
+      <p class="acx-card__status" data-card-status role="status" hidden></p>
+    </form>
+  </div>
+  <script type="application/json" data-card-product>
+    {% render 'acx-product-json', product: product %}
+  </script>
+</acx-product-card-component>

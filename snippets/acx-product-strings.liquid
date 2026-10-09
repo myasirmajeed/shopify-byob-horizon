@@ -1,0 +1,27 @@
+{% doc %}
+  Translated strings for the Advanced Cart product cards and frequently
+  bought together, read by `acx-products.js`. Safe to render more than once;
+  scripts read the first copy.
+
+  @example
+  {% render 'acx-product-strings' %}
+{% enddoc %}
+<script type="application/json" data-acx-product-strings>
+  {
+    "addToCart": {{ 'acx.add_to_cart' | t | json }},
+    "adding": {{ 'acx.adding' | t | json }},
+    "added": {{ 'acx.added_short' | t | json }},
+    "soldOut": {{ 'acx.sold_out' | t | json }},
+    "salePrice": {{ 'acx.sale_price' | t | json }},
+    "regularPrice": {{ 'acx.regular_price' | t | json }},
+    "variantSoldOut": {{ 'acx.variant_sold_out' | t: variant: '[variant]' | json }},
+    "addError": {{ 'acx.add_error' | t | json }},
+    "networkError": {{ 'acx.network_error' | t | json }},
+    "nothingSelected": {{ 'acx.fbt_nothing_selected' | t | json }},
+    "addSelectedOne": {{ 'acx.fbt_add_selected.one' | t | json }},
+    "addSelectedOther": {{ 'acx.fbt_add_selected.other' | t: count: '[count]' | json }},
+    "addedOne": {{ 'acx.fbt_added.one' | t | json }},
+    "addedOther": {{ 'acx.fbt_added.other' | t: count: '[count]' | json }},
+    "notAdded": {{ 'acx.fbt_not_added' | t: items: '[items]' | json }}
+  }
+</script>

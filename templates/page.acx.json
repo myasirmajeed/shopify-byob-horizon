@@ -1,0 +1,146 @@
+{
+  "sections": {
+    "products": {
+      "type": "acx-products",
+      "settings": {
+        "eyebrow": "Advanced cart demo",
+        "heading": "Brew Bar",
+        "intro": "<p>A small coffee shop built to show an advanced AJAX cart. Add anything and the cart drawer opens with live totals, offers and suggestions — every change is a real Shopify cart update.</p>",
+        "products": [
+          "acx-house-blend-beans",
+          "acx-ceramic-dripper",
+          "acx-gooseneck-kettle",
+          "acx-hand-grinder",
+          "acx-coffee-scale",
+          "acx-stoneware-mug",
+          "acx-cold-brew-bottle",
+          "acx-travel-tumbler"
+        ],
+        "hint_1": "Free shipping on orders over $100",
+        "hint_2": "Free bean sampler on orders over $150",
+        "hint_3": "Try code BREW10 for 10% off"
+      }
+    },
+    "bought_together": {
+      "type": "acx-fbt",
+      "settings": {
+        "heading": "Frequently bought together",
+        "text": "Everything you need for your first pour-over.",
+        "product": "acx-ceramic-dripper",
+        "companions": [
+          "acx-paper-filters",
+          "acx-glass-carafe",
+          "acx-house-blend-beans"
+        ]
+      }
+    },
+    "cart_drawer": {
+      "type": "acx-cart-drawer",
+      "blocks": {
+        "rule_ceramic_dripper": {
+          "type": "upsell_rule",
+          "settings": {
+            "trigger": "acx-ceramic-dripper",
+            "products": [
+              "acx-paper-filters",
+              "acx-glass-carafe",
+              "acx-gooseneck-kettle"
+            ]
+          }
+        },
+        "rule_gooseneck_kettle": {
+          "type": "upsell_rule",
+          "settings": {
+            "trigger": "acx-gooseneck-kettle",
+            "products": [
+              "acx-ceramic-dripper",
+              "acx-coffee-scale"
+            ]
+          }
+        },
+        "rule_hand_grinder": {
+          "type": "upsell_rule",
+          "settings": {
+            "trigger": "acx-hand-grinder",
+            "products": [
+              "acx-house-blend-beans",
+              "acx-coffee-scale"
+            ]
+          }
+        },
+        "rule_house_blend_beans": {
+          "type": "upsell_rule",
+          "settings": {
+            "trigger": "acx-house-blend-beans",
+            "products": [
+              "acx-hand-grinder",
+              "acx-ceramic-dripper"
+            ]
+          }
+        },
+        "rule_glass_carafe": {
+          "type": "upsell_rule",
+          "settings": {
+            "trigger": "acx-glass-carafe",
+            "products": [
+              "acx-ceramic-dripper",
+              "acx-stoneware-mug"
+            ]
+          }
+        },
+        "rule_cold_brew_bottle": {
+          "type": "upsell_rule",
+          "settings": {
+            "trigger": "acx-cold-brew-bottle",
+            "products": [
+              "acx-house-blend-beans",
+              "acx-travel-tumbler"
+            ]
+          }
+        }
+      },
+      "block_order": [
+        "rule_ceramic_dripper",
+        "rule_gooseneck_kettle",
+        "rule_hand_grinder",
+        "rule_house_blend_beans",
+        "rule_glass_carafe",
+        "rule_cold_brew_bottle"
+      ],
+      "settings": {
+        "intercept_header": true,
+        "free_shipping_enabled": true,
+        "free_shipping_threshold": 100,
+        "free_shipping_confirmed": true,
+        "gift_enabled": true,
+        "gift_threshold": 150,
+        "gift_product": "acx-bean-sampler",
+        "upsell_heading": "Pairs well with",
+        "use_recommendations": true,
+        "recommendation_tag": "acx-product",
+        "upsell_limit": 3,
+        "upsell_products": [
+          "acx-coffee-scale",
+          "acx-paper-filters",
+          "acx-stoneware-mug",
+          "acx-house-blend-beans"
+        ],
+        "show_discount": true,
+        "empty_heading": "Your cart is empty",
+        "empty_text": "Good coffee starts here. Pick a brewer, beans or a mug to begin.",
+        "continue_url": "/collections/all",
+        "empty_featured_heading": "Popular right now",
+        "empty_products": [
+          "acx-house-blend-beans",
+          "acx-ceramic-dripper",
+          "acx-stoneware-mug"
+        ]
+      }
+    }
+  },
+  "order": [
+    "products",
+    "bought_together",
+    "cart_drawer"
+  ]
+}

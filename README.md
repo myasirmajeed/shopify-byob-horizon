@@ -1,16 +1,17 @@
 # Shopify Horizon Customizations — Portfolio
 
-**Four production-style storefront features built on Shopify's Horizon theme (Online Store 2.0)** —
+**Five production-style storefront features built on Shopify's Horizon theme (Online Store 2.0)** —
 written in Liquid, vanilla JavaScript (ES modules) and CSS, with no apps and no external libraries.
 
 By **Yasir Majeed** · Shopify developer
 
 | Demo | What it shows | Live URL* |
 | --- | --- | --- |
-| [Shop the Look](#1-shop-the-look) | Lifestyle images with product hotspots, variant-aware quick add, add the whole look | `/pages/shop-the-look` |
-| [Product Personalizer](#2-product-personalizer) | Live SVG product preview, variant logic, add-on products, validation | `/pages/custom-gift-box` |
-| [Build Your Own Box — Chocolate](#3-build-your-own-box--four-step-chocolate-builder) | Four-step builder, state persistence, filters, honest pricing | `/pages/build-your-own-box-2` |
-| [Build Your Own Box — Classic](#4-build-your-own-box--single-page-builder) | Single-page bundle builder with min/max rules | `/products/build-your-own-box` |
+| [Advanced AJAX Cart](#1-advanced-ajax-cart--smart-upsells) | Cart drawer, free-shipping and gift progress, smart upsells, bought together, discount codes | `/pages/advanced-cart` |
+| [Shop the Look](#2-shop-the-look) | Lifestyle images with product hotspots, variant-aware quick add, add the whole look | `/pages/shop-the-look` |
+| [Product Personalizer](#3-product-personalizer) | Live SVG product preview, variant logic, add-on products, validation | `/pages/custom-gift-box` |
+| [Build Your Own Box — Chocolate](#4-build-your-own-box--four-step-chocolate-builder) | Four-step builder, state persistence, filters, honest pricing | `/pages/build-your-own-box-2` |
+| [Build Your Own Box — Classic](#5-build-your-own-box--single-page-builder) | Single-page bundle builder with min/max rules | `/products/build-your-own-box` |
 
 \* Store: `yasir-demo-lab.myshopify.com` — a password-protected development store. The password is
 available on request.
@@ -20,10 +21,11 @@ available on request.
 ## Contents
 
 - [Tech stack](#tech-stack)
-- [1. Shop the Look](#1-shop-the-look)
-- [2. Product Personalizer](#2-product-personalizer)
-- [3. Build Your Own Box — four-step chocolate builder](#3-build-your-own-box--four-step-chocolate-builder)
-- [4. Build Your Own Box — single-page builder](#4-build-your-own-box--single-page-builder)
+- [1. Advanced AJAX Cart & smart upsells](#1-advanced-ajax-cart--smart-upsells)
+- [2. Shop the Look](#2-shop-the-look)
+- [3. Product Personalizer](#3-product-personalizer)
+- [4. Build Your Own Box — four-step chocolate builder](#4-build-your-own-box--four-step-chocolate-builder)
+- [5. Build Your Own Box — single-page builder](#5-build-your-own-box--single-page-builder)
 - [Engineering decisions](#engineering-decisions)
 - [Project structure](#project-structure)
 - [Running it yourself](#running-it-yourself)
@@ -45,7 +47,49 @@ available on request.
 
 ---
 
-## 1. Shop the Look
+## 1. Advanced AJAX Cart & smart upsells
+
+A coffee shop ("Brew Bar") built to show a complete AJAX cart experience. Every number in the drawer comes
+from Shopify's cart JSON — nothing is simulated in the browser.
+
+<p>
+  <img src="docs/screenshots/advanced-cart-drawer.jpg" alt="Cart drawer with free shipping unlocked, the free gift added, line items and the sticky checkout area" width="45%">
+  <img src="docs/screenshots/advanced-cart-fbt.jpg" alt="Frequently bought together: four products with checkboxes, variant pickers and a combined price" width="45%">
+</p>
+
+**Features**
+- **Cart drawer** — native modal `<dialog>` that slides in after add to cart or from the header cart button.
+  Line items show image, title, selected options, visible line-item properties, line discounts and price.
+- **Quantity and remove** — rapid +/− clicks are coalesced into one `/cart/change.js` request; lines are
+  addressed by their line key, so BYOB contents and personalization properties are preserved. Stock limits
+  are reported from Shopify's response ("Only 5 items were added…").
+- **One request at a time** — every cart mutation goes through a single queue, so requests never race;
+  buttons show loading states and repeat clicks are ignored while a request is in flight.
+- **Free-shipping progress** — threshold set in the theme editor (store currency, converted for other
+  currencies). The bar only shows when the merchant confirms a matching Shopify free-shipping offer exists;
+  in the demo store it is backed by an automatic free-shipping discount.
+- **Free gift** — a $0 gift variant unlocks above $150. The shopper chooses the gift (it is never added
+  silently); the drawer keeps exactly one gift, at quantity 1, and removes it if the cart drops below the
+  threshold. The gift the shopper chose wins over copies added any other way.
+- **Smart upsells** — merchant rules ("when the cart contains X, suggest Y"), then Shopify's Product
+  Recommendations API (optionally limited to a tag), then a fallback list. Products already in the cart,
+  sold-out products and dismissed suggestions are skipped; the list re-ranks after every cart change.
+- **Frequently bought together** — checkboxes, variant pickers and a live combined price; the selection is
+  added in one `/cart/add.js` request with a per-item fallback that names anything Shopify rejects.
+- **Discount codes** — applied through `/cart/update.js`; the drawer only reports success when Shopify marks
+  the code as applicable, and removes rejected codes again.
+- **Empty cart** — message, continue-shopping actions and featured products with quick add.
+- **One cart system** — on this page the header cart button opens this drawer and Horizon's drawer auto-open
+  is paused; every mutation also dispatches Horizon's standard cart events, so the header count and the
+  theme's own cart stay in sync everywhere.
+
+**Accessibility** — focus moves into the drawer and back to the opener, Escape and backdrop close, focus is
+kept on a sensible element after a line or suggestion disappears, one polite live region announces changes,
+and every icon button has a descriptive name.
+
+---
+
+## 2. Shop the Look
 
 Four shoppable room scenes. Each hotspot opens a product card; every product in the look can be added
 individually or all at once.
@@ -89,7 +133,7 @@ failures are reported. Horizon's `CartLinesUpdateEvent` then refreshes the cart 
 
 ---
 
-## 2. Product Personalizer
+## 3. Product Personalizer
 
 A customer designs a gift box and sees it update instantly.
 
@@ -117,7 +161,7 @@ lines store `Added to: Custom Gift Box (Rose / Large)`; every line shares a hidd
 
 ---
 
-## 3. Build Your Own Box — four-step chocolate builder
+## 4. Build Your Own Box — four-step chocolate builder
 
 Choose a box → choose flavors → choose a sleeve → review → add to cart.
 
@@ -146,7 +190,7 @@ stored as line-item properties (`Total pieces`, `Flavor 1: Dark Sea Salt Caramel
 
 ---
 
-## 4. Build Your Own Box — single-page builder
+## 5. Build Your Own Box — single-page builder
 
 <img src="docs/screenshots/byob1-desktop.jpg" alt="Single-page box builder with box sizes, product grid and summary sidebar" width="68%">
 
@@ -163,7 +207,7 @@ stored as line-item properties (`Total pieces`, `Flavor 1: Dark Sea Salt Caramel
 (box size × sleeve, style × color × size) and add-on products added as linked cart lines. The number shown on
 the page is always the number in the cart — no front-end-only prices.
 
-**Isolation.** Each feature has its own namespace (`byob-`, `yb2-`, `pz-`, `stl-`) across sections, snippets, CSS classes,
+**Isolation.** Each feature has its own namespace (`byob-`, `yb2-`, `pz-`, `stl-`, `acx-`) across sections, snippets, CSS classes,
 custom elements, data attributes, localStorage keys and locale keys. Shared theme files are only touched
 additively (import-map entries in `snippets/scripts.liquid`, new namespaces in `locales/en.default*.json`).
 
@@ -191,20 +235,23 @@ debounced search; requests aborted when components disconnect.
 
 ```
 assets/
+  acx-cart-api.js acx-offers.js acx-ui.js acx-cart-drawer.js acx-products.js   # Advanced cart
   stl-model.js stl-card.js   stl-cart.js stl-looks.js           # Shop the Look
   pz-model.js  pz-preview.js  pz-cart.js  pz-customizer.js     # Product Personalizer
   yb2-model.js yb2-store.js   yb2-view.js yb2-cart.js yb2-builder.js   # BYOB 2
   byob-builder.js                                              # BYOB 1
 sections/
+  acx-cart-drawer.liquid  acx-products.liquid  acx-fbt.liquid
   stl-shop-the-look.liquid
   pz-customizer.liquid  yb2-builder.liquid  byob-builder.liquid
 blocks/
   _stl-look.liquid  _stl-hotspot.liquid                         # nested theme blocks
 snippets/
-  stl-*.liquid  pz-*.liquid  yb2-*.liquid  byob-*.liquid
+  acx-*.liquid  stl-*.liquid  pz-*.liquid  yb2-*.liquid  byob-*.liquid
 templates/
-  page.stl.json  page.pz.json  page.yb2.json  product.byob.json
+  page.acx.json  page.stl.json  page.pz.json  page.yb2.json  product.byob.json
 data/
+  acx-products.csv  make-acx-data.js  add-acx-locales.js
   stl-products.csv  make-stl-data.js  add-stl-locales.js
   pz-products.csv  yb2-products.csv  make-pz-products.js  add-pz-locales.js
 docs/screenshots/                                              # images in this README
@@ -222,9 +269,10 @@ Everything else is the stock Horizon 4.2.0 theme (first commit), kept so the rep
    ```
 2. **Import the demo products** from *Products → Import*:
    `data/yb2-products.csv` (chocolate box + 12 flavors), `data/pz-products.csv` (gift box + 3 add-ons) and
-   `data/stl-products.csv` (21 furniture and decor products). For Shop the Look, upload the four scene images to
+   `data/stl-products.csv` (21 furniture and decor products) and `data/acx-products.csv` (11 coffee products,
+   including a $0 gift). For the advanced cart, also create an automatic free-shipping discount and a test code. For Shop the Look, upload the four scene images to
    *Content → Files* as `stl-look-living.jpg`, `stl-look-bedroom.jpg`, `stl-look-outdoor.jpg` and `stl-look-office.jpg`.
-3. **Create the pages** and assign their templates: `stl` → `/pages/shop-the-look`, `pz` → `/pages/custom-gift-box`, `yb2` →
+3. **Create the pages** and assign their templates: `acx` → `/pages/advanced-cart`, `stl` → `/pages/shop-the-look`, `pz` → `/pages/custom-gift-box`, `yb2` →
    `/pages/build-your-own-box-2`. For BYOB 1, set a box product's theme template to `byob`.
 4. Adjust products, limits and copy in the theme editor.
 
@@ -248,6 +296,10 @@ added files.
   would merge them into a single bundle line; **Cart and Checkout Validation** could enforce the rules server-side.
 - Flavor inventory isn't decremented in BYOB 2 because flavors are stored as properties.
 - The personalizer preview is an illustration, not a print proof.
+- The free gift and upsell rules run in the theme. A **Cart Transform** or **Cart and Checkout Validation**
+  Function would enforce the gift rule server-side (a $0 product can otherwise be added directly).
+- Shopify's related-product recommendations need purchase and catalog data; on a new store the merchant
+  rules and fallback list carry the upsells.
 - Shop the Look hotspot positions are set as numbers; a visual drag-to-place picker would need an app or
   theme-editor extension.
 - Only English strings are included; other locales fall back to English.
@@ -262,6 +314,9 @@ added files.
   Ilya Mashkov, Massimo Adami, Jana Ohajdova, Monika Grabkowska, amirali mirhashemian, Ediglecio Lêla,
   Tetiana Bykovets, Büşra Salkım, Ioana Enescu, Hannah Dodwell, Elena Leya, Wijdan Mq, Ekaterina Shevchenko,
   Anastasiia Chepinska and Shamblen Studios.
+- Brew Bar product photos: free images from [Unsplash](https://unsplash.com/license) by Nadia Valko,
+  syahmi syahir, Madeline Liu, Devin Avery, Zarak Khan, Charlie Firth, Ashkan Forouzani, User_Pascal,
+  Samantha Ram, Taylor Beach, An Nguyen and Clint Bustrillos.
 - Shop the Look scenes: free images from [Unsplash](https://unsplash.com/license) by Sven Brandsma,
   Collov Home Design, Sergej and Arthur Lambillotte; product photos are crops of those scenes.
 - Gift box preview, truffle and sleeve illustrations: original SVG artwork.

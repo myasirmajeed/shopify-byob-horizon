@@ -1,0 +1,17 @@
+{% doc %}
+  Decorative product image in the frequently-bought-together strip; dimmed
+  by `<acx-fbt-component>` when its product is not selected.
+
+  @param {object} product - Product to show
+
+  @example
+  {% render 'acx-fbt-visual', product: product %}
+{% enddoc %}
+{%- assign item = product -%}
+<li class="acx-fbt__visual-item" data-fbt-visual="{{ item.id }}">
+  {%- if item.featured_image != blank -%}
+    {{ item.featured_image | image_url: width: 480 | image_tag: widths: '240, 360, 480', sizes: '(min-width: 990px) 180px, 30vw', loading: 'lazy', alt: '' }}
+  {%- else -%}
+    {{ 'product-1' | placeholder_svg_tag }}
+  {%- endif -%}
+</li>

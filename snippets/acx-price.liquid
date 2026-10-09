@@ -1,0 +1,17 @@
+{% doc %}
+  Sale-aware variant price for the Advanced Cart demo, matching the markup
+  that `priceNodes()` in `acx-ui.js` renders after variant changes.
+
+  @param {object} variant - Variant whose price to show
+
+  @example
+  {% render 'acx-price', variant: product.selected_or_first_available_variant %}
+{% enddoc %}
+{%- if variant.compare_at_price > variant.price -%}
+  <span class="visually-hidden">{{ 'acx.sale_price' | t }}</span>
+  <span class="acx-price acx-price--sale">{{ variant.price | money }}</span>
+  <span class="visually-hidden">{{ 'acx.regular_price' | t }}</span>
+  <s class="acx-price acx-price--compare">{{ variant.compare_at_price | money }}</s>
+{%- else -%}
+  <span class="acx-price">{{ variant.price | money }}</span>
+{%- endif -%}

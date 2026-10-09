@@ -1,0 +1,333 @@
+{% doc %}
+  Style owner for the Advanced Cart demo: design tokens, buttons, selects,
+  badges, prices and the product card. Rendered by every acx section so the
+  CSS is delivered wherever its markup can appear (stylesheet subsetting).
+
+  @example
+  {% render 'acx-shared-styles' %}
+{% enddoc %}
+
+{% stylesheet %}
+  .acx-scope {
+    --acx-ink: #1f1a16;
+    --acx-muted: #6b625a;
+    --acx-paper: #ffffff;
+    --acx-cream: #f6f1ea;
+    --acx-sand: #ebe3d8;
+    --acx-line: rgb(31 26 22 / 0.12);
+    --acx-line-strong: rgb(31 26 22 / 0.3);
+    --acx-accent: #9a4f25;
+    --acx-accent-soft: #f5e6db;
+    --acx-success: #2d6a4b;
+    --acx-success-soft: #e3f0e8;
+    --acx-danger: #a33a2b;
+    --acx-danger-soft: #f8e4e0;
+    --acx-radius: 14px;
+    --acx-radius-sm: 10px;
+    --acx-shadow: 0 1px 2px rgb(31 26 22 / 0.06), 0 16px 40px rgb(31 26 22 / 0.14);
+    --acx-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+    --acx-serif: 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+    --acx-gutter: max(16px, var(--page-margin, 16px));
+
+    color: var(--acx-ink);
+  }
+
+  /* Components toggle [hidden]; never let a display rule override it. */
+  .acx-scope [hidden] {
+    display: none !important;
+  }
+
+  .acx-scope *:focus-visible {
+    outline: 2px solid var(--acx-accent);
+    outline-offset: 2px;
+  }
+
+  .acx-icon {
+    inline-size: 18px;
+    block-size: 18px;
+    flex: none;
+  }
+
+  /* Buttons */
+  .acx-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-block-size: 46px;
+    padding: 0 20px;
+    border: 1px solid var(--acx-ink);
+    border-radius: 999px;
+    background: var(--acx-paper);
+    color: var(--acx-ink);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 160ms var(--acx-ease), color 160ms var(--acx-ease), border-color 160ms, transform 160ms var(--acx-ease);
+  }
+
+  .acx-btn:hover:not(:disabled) {
+    background: var(--acx-ink);
+    color: var(--acx-paper);
+  }
+
+  .acx-btn:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .acx-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  .acx-btn[data-busy] {
+    cursor: progress;
+    opacity: 0.75;
+  }
+
+  .acx-btn--primary {
+    background: var(--acx-ink);
+    color: var(--acx-paper);
+  }
+
+  .acx-btn--primary:hover:not(:disabled) {
+    border-color: var(--acx-accent);
+    background: var(--acx-accent);
+  }
+
+  .acx-btn--block {
+    inline-size: 100%;
+  }
+
+  .acx-btn--small {
+    min-block-size: 38px;
+    padding: 0 14px;
+    font-size: 0.875rem;
+  }
+
+  .acx-btn--link {
+    min-block-size: 44px;
+    border-color: transparent;
+    background: transparent;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .acx-btn--link:hover:not(:disabled) {
+    background: transparent;
+    color: var(--acx-accent);
+  }
+
+  .acx-btn[data-added] {
+    border-color: var(--acx-success);
+    background: var(--acx-success);
+    color: var(--acx-paper);
+  }
+
+  .acx-icon-button {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 44px;
+    block-size: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .acx-icon-button:hover {
+    background: var(--acx-sand);
+  }
+
+  /* Select */
+  .acx-select {
+    inline-size: 100%;
+    min-block-size: 44px;
+    padding: 0 36px 0 12px;
+    border: 1px solid var(--acx-line-strong);
+    border-radius: var(--acx-radius-sm);
+    background: var(--acx-paper)
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%231f1a16' stroke-width='1.6'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E")
+      no-repeat right 10px center / 16px;
+    color: var(--acx-ink);
+    font: inherit;
+    font-size: 0.875rem;
+    appearance: none;
+  }
+
+  [dir='rtl'] .acx-select {
+    padding: 0 12px 0 36px;
+    background-position: left 10px center;
+  }
+
+  /* Badges and prices */
+  .acx-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--acx-accent-soft);
+    color: var(--acx-accent);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .acx-badge--muted {
+    background: var(--acx-sand);
+    color: var(--acx-muted);
+  }
+
+  .acx-badge--gift {
+    background: var(--acx-success-soft);
+    color: var(--acx-success);
+  }
+
+  .acx-price {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+
+  .acx-price--sale {
+    color: var(--acx-accent);
+  }
+
+  .acx-price--compare {
+    color: var(--acx-muted);
+    font-weight: 400;
+  }
+
+  /* Product card */
+  .acx-card {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--acx-line);
+    border-radius: var(--acx-radius);
+    background: var(--acx-paper);
+  }
+
+  .acx-card__media {
+    position: relative;
+    display: block;
+    aspect-ratio: 1;
+    overflow: hidden;
+    background: var(--acx-sand);
+  }
+
+  .acx-card__image {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    transition: transform 400ms var(--acx-ease);
+  }
+
+  .acx-card:hover .acx-card__image {
+    transform: scale(1.03);
+  }
+
+  .acx-card__badge {
+    position: absolute;
+    inset-block-start: 10px;
+    inset-inline-start: 10px;
+  }
+
+  .acx-card__body {
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    gap: 6px;
+    min-width: 0;
+    padding: 14px;
+  }
+
+  .acx-card__title {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+
+  .acx-card__title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .acx-card__title a:hover {
+    text-decoration: underline;
+  }
+
+  .acx-card__price {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: baseline;
+    margin: 0;
+    font-size: 0.9375rem;
+  }
+
+  .acx-card__form {
+    display: grid;
+    align-content: end;
+    gap: 8px;
+    margin-block-start: 6px;
+  }
+
+  .acx-card__status {
+    margin: 0;
+    font-size: 0.8125rem;
+  }
+
+  .acx-card__status[data-tone='error'] {
+    color: var(--acx-danger);
+  }
+
+  .acx-card--compact {
+    grid-template-columns: 72px minmax(0, 1fr);
+    grid-template-rows: none;
+    align-items: center;
+  }
+
+  .acx-card--compact .acx-card__media {
+    block-size: 100%;
+    aspect-ratio: auto;
+  }
+
+  .acx-card--compact .acx-card__badge {
+    display: none;
+  }
+
+  .acx-card--compact .acx-card__body {
+    padding: 10px 12px;
+    gap: 4px;
+  }
+
+  .acx-card--compact .acx-card__form {
+    margin: 0;
+  }
+
+  .acx-card--compact .acx-btn {
+    min-block-size: 38px;
+    font-size: 0.8125rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .acx-btn,
+    .acx-card__image {
+      transition: none;
+    }
+
+    .acx-card:hover .acx-card__image {
+      transform: none;
+    }
+  }
+{% endstylesheet %}

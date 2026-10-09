@@ -1,0 +1,1389 @@
+{% comment %}
+  Section contract.
+  Advanced Cart demo drawer: AJAX line items, free-shipping and free-gift
+  progress, smart upsells (merchant rules, Shopify recommendations, fallback
+  list), discount codes and an empty-cart state. Renders nothing visible
+  until opened. On the page that includes it, the header cart button opens
+  this drawer instead of Horizon's, so only one cart UI is active.
+  @example
+  <!-- Assigned through templates/page.acx.json on the /pages/advanced-cart page -->
+{% endcomment %}
+
+{%- render 'acx-shared-styles' -%}
+{%- render 'acx-product-strings' -%}
+
+{%- liquid
+  assign gift_product = section.settings.gift_product
+  assign gift_is_free = false
+  if gift_product != blank and gift_product.price_max == 0
+    assign gift_is_free = true
+  endif
+  assign gift_on = false
+  if section.settings.gift_enabled and gift_is_free
+    assign gift_on = true
+  endif
+  assign shipping_on = false
+  if section.settings.free_shipping_enabled and section.settings.free_shipping_confirmed
+    assign shipping_on = true
+  endif
+  assign dialog_id = 'AcxCart-' | append: section.id
+  assign title_id = 'AcxCartTitle-' | append: section.id
+-%}
+
+{%- if request.design_mode -%}
+  <div class="acx-scope acx-editor-note">
+    <p><strong>{{ 'acx.editor_drawer' | t }}</strong></p>
+    {%- if section.settings.free_shipping_enabled and section.settings.free_shipping_confirmed == false -%}
+      <p>{{ 'acx.editor_shipping_unconfirmed' | t }}</p>
+    {%- endif -%}
+    {%- if section.settings.gift_enabled and gift_product != blank and gift_is_free == false -%}
+      <p>{{ 'acx.editor_gift_not_free' | t }}</p>
+    {%- endif -%}
+    <button type="button" class="acx-btn acx-btn--small" data-acx-open-cart>{{ 'acx.view_cart' | t }}</button>
+  </div>
+{%- endif -%}
+
+<acx-cart-drawer-component
+  class="acx-scope acx-cart"
+  data-money-format="{{ shop.money_format | strip_html | escape }}"
+  data-currency="{{ cart.currency.iso_code }}"
+  data-intercept-header="{{ section.settings.intercept_header }}"
+>
+  <dialog class="acx-drawer" id="{{ dialog_id }}" data-acx-dialog aria-labelledby="{{ title_id }}">
+    <div class="acx-drawer__panel">
+      <header class="acx-drawer__header">
+        <h2 class="acx-drawer__title" id="{{ title_id }}" tabindex="-1" data-acx-title>
+          {{- 'acx.cart_title' | t }} <span class="acx-drawer__count" data-acx-count></span>
+        </h2>
+        <button type="button" class="acx-icon-button" on:click="/close" aria-label="{{ 'acx.close_cart' | t }}">
+          {%- render 'acx-icon', name: 'close' -%}
+        </button>
+        <div class="acx-drawer__loading" data-acx-loading hidden></div>
+      </header>
+
+      <div class="acx-drawer__body">
+        <div class="acx-offers">
+          {%- if shipping_on -%}
+            <div class="acx-offer acx-offer--shipping" data-acx-shipping hidden>
+              <p class="acx-offer__text">
+                {%- render 'acx-icon', name: 'truck' -%}
+                <span data-acx-shipping-text></span>
+              </p>
+              <div
+                class="acx-meter"
+                role="progressbar"
+                aria-label="{{ 'acx.shipping_progress' | t }}"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+              >
+                <span class="acx-meter__fill"></span>
+              </div>
+            </div>
+          {%- endif -%}
+
+          {%- if gift_on -%}
+            <div class="acx-offer acx-offer--gift" data-acx-gift hidden>
+              <p class="acx-offer__text" tabindex="-1" data-acx-gift-status>
+                {%- render 'acx-icon', name: 'gift' -%}
+                <span data-acx-gift-text></span>
+              </p>
+              <div
+                class="acx-meter acx-meter--gift"
+                role="progressbar"
+                aria-label="{{ 'acx.gift_progress' | t }}"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+              >
+                <span class="acx-meter__fill"></span>
+              </div>
+              <div class="acx-gift" data-acx-gift-choose hidden>
+                {%- liquid
+                  assign gift_variants = gift_product.variants | where: 'available'
+                  assign first_gift = gift_variants | first
+                -%}
+                {%- if gift_variants.size > 1 -%}
+                  <fieldset class="acx-gift__options">
+                    <legend class="acx-gift__legend">{{ 'acx.gift_choose_legend' | t }}</legend>
+                    {%- for gift_variant in gift_variants -%}
+                      <label class="acx-pill">
+                        <input
+                          type="radio"
+                          name="acx-gift-variant"
+                          value="{{ gift_variant.id }}"
+                          {% if forloop.first %}
+                            checked
+                          {% endif %}
+                        >
+                        <span>{{ gift_variant.title | escape }}</span>
+                      </label>
+                    {%- endfor -%}
+                  </fieldset>
+                {%- elsif first_gift -%}
+                  <input type="hidden" name="acx-gift-variant" value="{{ first_gift.id }}">
+                {%- endif -%}
+                <button type="button" class="acx-btn acx-btn--small acx-btn--primary" on:click="/addGift">
+                  {%- render 'acx-icon', name: 'gift' -%}
+                  <span data-acx-gift-label>{{ 'acx.add_gift' | t }}</span>
+                </button>
+              </div>
+            </div>
+          {%- endif -%}
+        </div>
+
+        <div class="acx-alert" data-acx-status role="alert" hidden>
+          {%- render 'acx-icon', name: 'alert' -%}
+          <p data-acx-status-text></p>
+          <button type="button" class="acx-icon-button" on:click="/dismissStatus" aria-label="{{ 'acx.dismiss_message' | t }}">
+            {%- render 'acx-icon', name: 'close' -%}
+          </button>
+        </div>
+
+        <ul class="acx-lines" role="list" aria-label="{{ 'acx.items_label' | t }}" data-acx-lines></ul>
+
+        <div class="acx-summary" data-acx-summary hidden>
+          {%- if section.settings.show_discount -%}
+            <details class="acx-discount">
+              <summary class="acx-discount__summary">
+                {%- render 'acx-icon', name: 'tag' -%}
+                <span>{{ 'acx.discount_toggle' | t }}</span>
+              </summary>
+              <form class="acx-discount__form" on:submit="/applyDiscount" novalidate>
+                <label class="visually-hidden" for="AcxDiscount-{{ section.id }}">{{ 'acx.discount_label' | t }}</label>
+                <input
+                  class="acx-input"
+                  id="AcxDiscount-{{ section.id }}"
+                  name="code"
+                  type="text"
+                  autocomplete="off"
+                  autocapitalize="characters"
+                  spellcheck="false"
+                  placeholder="{{ 'acx.discount_placeholder' | t }}"
+                  aria-describedby="AcxDiscountStatus-{{ section.id }}"
+                  data-acx-discount-input
+                >
+                <button type="submit" class="acx-btn acx-btn--small">{{ 'acx.apply' | t }}</button>
+              </form>
+              <p class="acx-discount__status" id="AcxDiscountStatus-{{ section.id }}" role="status" data-acx-discount-status hidden></p>
+            </details>
+            <ul class="acx-codes" role="list" aria-label="{{ 'acx.applied_codes' | t }}" data-acx-codes hidden></ul>
+          {%- endif -%}
+
+          <dl class="acx-totals acx-totals--summary" data-acx-breakdown>
+            <div class="acx-totals__row" data-acx-subtotal-row>
+              <dt>{{ 'acx.subtotal' | t }}</dt>
+              <dd data-acx-subtotal></dd>
+            </div>
+            <div class="acx-totals__row acx-totals__row--savings" data-acx-savings-row hidden>
+              <dt>{{ 'acx.discounts' | t }}</dt>
+              <dd data-acx-savings></dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="acx-empty" data-acx-empty hidden>
+          <span class="acx-empty__icon">{% render 'acx-icon', name: 'cart' %}</span>
+          <h3 class="acx-empty__heading" tabindex="-1" data-acx-empty-heading>
+            {%- if section.settings.empty_heading != blank -%}{{ section.settings.empty_heading | escape }}{%- else -%}{{ 'acx.empty_heading' | t }}{%- endif -%}
+          </h3>
+          {%- if section.settings.empty_text != blank -%}
+            <p class="acx-empty__text">{{ section.settings.empty_text | escape }}</p>
+          {%- endif -%}
+          <div class="acx-empty__actions">
+            <button type="button" class="acx-btn acx-btn--primary" on:click="/close">{{ 'acx.continue_shopping' | t }}</button>
+            {%- if section.settings.continue_url != blank -%}
+              <a class="acx-btn acx-btn--link" href="{{ section.settings.continue_url }}">{{ 'acx.browse_all' | t }}</a>
+            {%- endif -%}
+          </div>
+
+          {%- liquid
+            assign featured = section.settings.empty_products
+            assign featured_count = featured.count
+            if section.settings.empty_collection != blank
+              assign featured = section.settings.empty_collection.products
+              assign featured_count = section.settings.empty_collection.products_count
+            endif
+          -%}
+          {%- if featured_count > 0 -%}
+            <div class="acx-empty__featured">
+              <h4 class="acx-section-title">{%- if section.settings.empty_featured_heading != blank -%}{{ section.settings.empty_featured_heading | escape }}{%- else -%}{{ 'acx.empty_featured' | t }}{%- endif -%}</h4>
+              <ul class="acx-empty__list" role="list">
+                {%- for product in featured limit: 4 -%}
+                  <li>{% render 'acx-product-card', product: product, compact: true, sizes: '72px', section_id: section.id %}</li>
+                {%- endfor -%}
+              </ul>
+            </div>
+          {%- endif -%}
+        </div>
+
+        <section class="acx-upsells" data-acx-upsells aria-labelledby="AcxUpsellsTitle-{{ section.id }}" hidden>
+          <h3 class="acx-section-title" id="AcxUpsellsTitle-{{ section.id }}">{%- if section.settings.upsell_heading != blank -%}{{ section.settings.upsell_heading | escape }}{%- else -%}{{ 'acx.upsell_heading' | t }}{%- endif -%}</h3>
+          <ul class="acx-upsells__list" role="list" data-acx-upsell-list></ul>
+        </section>
+
+      </div>
+
+      <footer class="acx-drawer__footer" data-acx-footer hidden>
+        <dl class="acx-totals">
+          <div class="acx-totals__row acx-totals__row--total">
+            <dt>{{ 'acx.total' | t }}</dt>
+            <dd data-acx-total></dd>
+          </div>
+        </dl>
+        <p class="acx-drawer__note">{{ 'acx.taxes_note' | t }}</p>
+        <form action="{{ routes.cart_url }}" method="post" class="acx-checkout">
+          <button type="submit" name="checkout" class="acx-btn acx-btn--primary acx-btn--block" data-acx-checkout>
+            {{- 'acx.checkout' | t -}}
+            {%- render 'acx-icon', name: 'arrow' -%}
+          </button>
+        </form>
+        <button type="button" class="acx-btn acx-btn--link acx-btn--block acx-drawer__continue" on:click="/close">
+          {{- 'acx.continue_shopping' | t -}}
+        </button>
+      </footer>
+    </div>
+  </dialog>
+
+  <p class="visually-hidden" aria-live="polite" data-acx-announcer></p>
+
+  <template data-acx-line-template>
+    <li class="acx-line" data-acx-line>
+      <a class="acx-line__media" data-line-link tabindex="-1" aria-hidden="true">
+        <img data-line-image alt="" width="88" height="88" loading="lazy">
+      </a>
+      <div class="acx-line__body">
+        <div class="acx-line__top">
+          <div class="acx-line__info">
+            <span class="acx-badge acx-badge--gift" data-line-gift hidden>{{ 'acx.free_gift' | t }}</span>
+            <a class="acx-line__title" data-line-title></a>
+            <p class="acx-line__variant" data-line-variant hidden></p>
+            <dl class="acx-line__props" data-line-props hidden></dl>
+            <ul class="acx-line__discounts" role="list" data-line-discounts hidden></ul>
+          </div>
+          <div class="acx-line__price" data-line-price></div>
+        </div>
+        <div class="acx-line__actions">
+          <div class="acx-qty" data-line-qty>
+            <button type="button" class="acx-qty__button" data-line-decrease on:click="/decreaseLine">
+              {%- render 'acx-icon', name: 'minus' -%}
+            </button>
+            <input class="acx-qty__input" type="number" inputmode="numeric" min="0" max="999" data-line-input on:change="/inputLine">
+            <button type="button" class="acx-qty__button" data-line-increase on:click="/increaseLine">
+              {%- render 'acx-icon', name: 'plus' -%}
+            </button>
+          </div>
+          <button type="button" class="acx-line__remove" data-line-remove on:click="/removeLine">{{ 'acx.remove' | t }}</button>
+        </div>
+        <p class="acx-line__error" data-line-error hidden></p>
+      </div>
+    </li>
+  </template>
+
+  <template data-acx-upsell-template>
+    <li class="acx-upsell" data-acx-upsell>
+      <img class="acx-upsell__image" data-upsell-image alt="" width="64" height="64" loading="lazy">
+      <div class="acx-upsell__body">
+        <a class="acx-upsell__title" data-upsell-title></a>
+        <p class="acx-upsell__meta">
+          <span class="acx-upsell__price" data-upsell-price></span>
+          <span class="acx-upsell__availability" data-upsell-availability></span>
+        </p>
+        <label class="visually-hidden" data-upsell-select-label hidden></label>
+        <select class="acx-select acx-upsell__select" data-upsell-select on:change="/selectUpsellVariant" hidden></select>
+      </div>
+      <div class="acx-upsell__actions">
+        <button type="button" class="acx-btn acx-btn--small" data-upsell-add on:click="/addUpsell">
+          {%- render 'acx-icon', name: 'plus' -%}
+          <span data-upsell-add-label>{{ 'acx.add' | t }}</span>
+        </button>
+        <button type="button" class="acx-upsell__dismiss" data-upsell-dismiss on:click="/dismissUpsell">
+          {%- render 'acx-icon', name: 'close' -%}
+        </button>
+      </div>
+    </li>
+  </template>
+
+  <template data-acx-code-template>
+    <li class="acx-code">
+      {%- render 'acx-icon', name: 'tag' -%}
+      <span data-code-text></span>
+      <button type="button" class="acx-code__remove" data-code-remove on:click="/removeDiscount">
+        {%- render 'acx-icon', name: 'close' -%}
+      </button>
+    </li>
+  </template>
+
+  <script type="application/json" data-acx-config>
+    {
+      "cart": {{ cart | json }},
+      "freeShipping": {
+        "enabled": {{ shipping_on | json }},
+        "threshold": {{ section.settings.free_shipping_threshold | default: 0 | json }}
+      },
+      "gift": {
+        "enabled": {{ gift_on | json }},
+        "threshold": {{ section.settings.gift_threshold | default: 0 | json }},
+        "productId": {% if gift_product != blank %}{{ gift_product.id }}{% else %}null{% endif %},
+        "title": {{ gift_product.title | default: '' | json }},
+        "variants": [
+          {%- for gift_variant in gift_product.variants -%}
+            { "id": {{ gift_variant.id }}, "title": {{ gift_variant.title | json }}, "available": {{ gift_variant.available | json }} }
+            {%- unless forloop.last -%},{%- endunless -%}
+          {%- endfor -%}
+        ]
+      },
+      "rules": [
+        {%- for block in section.blocks -%}
+          {
+            "trigger": {% if block.settings.trigger != blank %}{{ block.settings.trigger.id }}{% else %}0{% endif %},
+            "products": [
+              {%- for product in block.settings.products -%}
+                {% render 'acx-product-json', product: product %}
+                {%- unless forloop.last -%},{%- endunless -%}
+              {%- endfor -%}
+            ]
+          }
+          {%- unless forloop.last -%},{%- endunless -%}
+        {%- endfor -%}
+      ],
+      "fallback": [
+        {%- for product in section.settings.upsell_products -%}
+          {% render 'acx-product-json', product: product %}
+          {%- unless forloop.last -%},{%- endunless -%}
+        {%- endfor -%}
+      ],
+      "upsellLimit": {{ section.settings.upsell_limit | json }},
+      "useRecommendations": {{ section.settings.use_recommendations | json }},
+      "recommendationTag": {{ section.settings.recommendation_tag | default: '' | strip | json }},
+      "recommendationsUrl": {{ routes.product_recommendations_url | json }},
+      "strings": {
+        "countOne": {{ 'acx.count.one' | t | json }},
+        "countOther": {{ 'acx.count.other' | t: count: '[count]' | json }},
+        "added": {{ 'acx.added' | t: items: '[items]' | json }},
+        "removed": {{ 'acx.removed' | t: title: '[title]' | json }},
+        "quantityUpdated": {{ 'acx.quantity_updated' | t: title: '[title]', quantity: '[quantity]' | json }},
+        "limited": {{ 'acx.limited' | t: quantity: '[quantity]', title: '[title]' | json }},
+        "lineError": {{ 'acx.line_error' | t | json }},
+        "addError": {{ 'acx.add_error' | t | json }},
+        "loadError": {{ 'acx.load_error' | t | json }},
+        "genericError": {{ 'acx.generic_error' | t | json }},
+        "quantityFor": {{ 'acx.quantity_for' | t: title: '[title]' | json }},
+        "decreaseFor": {{ 'acx.decrease_for' | t: title: '[title]' | json }},
+        "increaseFor": {{ 'acx.increase_for' | t: title: '[title]' | json }},
+        "removeFor": {{ 'acx.remove_for' | t: title: '[title]' | json }},
+        "removeGiftFor": {{ 'acx.remove_gift_for' | t: title: '[title]' | json }},
+        "lineDiscount": {{ 'acx.line_discount' | t: title: '[title]', amount: '[amount]' | json }},
+        "each": {{ 'acx.each' | t: price: '[price]' | json }},
+        "free": {{ 'acx.free' | t | json }},
+        "salePrice": {{ 'acx.sale_price' | t | json }},
+        "regularPrice": {{ 'acx.regular_price' | t | json }},
+        "shippingRemaining": {{ 'acx.shipping_remaining' | t: amount: '[amount]' | json }},
+        "shippingUnlocked": {{ 'acx.shipping_unlocked' | t | json }},
+        "giftRemaining": {{ 'acx.gift_remaining' | t: amount: '[amount]', gift: '[gift]' | json }},
+        "giftChoose": {{ 'acx.gift_choose' | t: gift: '[gift]' | json }},
+        "giftAdded": {{ 'acx.gift_added' | t: gift: '[gift]' | json }},
+        "giftRemoved": {{ 'acx.gift_removed' | t | json }},
+        "giftError": {{ 'acx.gift_error' | t | json }},
+        "giftSyncError": {{ 'acx.gift_sync_error' | t | json }},
+        "addGift": {{ 'acx.add_gift' | t | json }},
+        "adding": {{ 'acx.adding' | t | json }},
+        "add": {{ 'acx.add' | t | json }},
+        "addProduct": {{ 'acx.add_product' | t: title: '[title]' | json }},
+        "available": {{ 'acx.available' | t | json }},
+        "soldOut": {{ 'acx.sold_out' | t | json }},
+        "variantSoldOut": {{ 'acx.variant_sold_out' | t: variant: '[variant]' | json }},
+        "optionsFor": {{ 'acx.options_for' | t: title: '[title]' | json }},
+        "dismissFor": {{ 'acx.dismiss_for' | t: title: '[title]' | json }},
+        "dismissed": {{ 'acx.dismissed' | t | json }},
+        "discountEmpty": {{ 'acx.discount_empty' | t | json }},
+        "discountAlready": {{ 'acx.discount_already' | t: code: '[code]' | json }},
+        "discountChecking": {{ 'acx.discount_checking' | t | json }},
+        "discountApplied": {{ 'acx.discount_applied' | t: code: '[code]' | json }},
+        "discountAppliedCheckout": {{ 'acx.discount_applied_checkout' | t: code: '[code]' | json }},
+        "discountInvalid": {{ 'acx.discount_invalid' | t: code: '[code]' | json }},
+        "discountRemoved": {{ 'acx.discount_removed' | t: code: '[code]' | json }},
+        "discountError": {{ 'acx.discount_error' | t | json }},
+        "removeCode": {{ 'acx.remove_code' | t: code: '[code]' | json }}
+      }
+    }
+  </script>
+</acx-cart-drawer-component>
+
+<script src="{{ 'acx-cart-drawer.js' | asset_url }}" type="module"></script>
+<script src="{{ 'acx-products.js' | asset_url }}" type="module" fetchpriority="low"></script>
+
+{% stylesheet %}
+  .acx-editor-note {
+    display: grid;
+    justify-items: start;
+    gap: 8px;
+    max-width: 1320px;
+    margin: 16px auto;
+    padding: 16px var(--acx-gutter);
+    border: 1px dashed var(--acx-line-strong);
+    border-radius: var(--acx-radius);
+  }
+
+  .acx-editor-note p {
+    margin: 0;
+  }
+
+  /* Drawer shell: a full-viewport modal <dialog> whose panel slides in. */
+  .acx-drawer {
+    --acx-slide: 100%;
+
+    position: fixed;
+    inset: 0;
+    inline-size: 100%;
+    max-inline-size: 100%;
+    block-size: 100%;
+    max-block-size: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--acx-ink);
+    overflow: hidden;
+  }
+
+  [dir='rtl'] .acx-drawer {
+    --acx-slide: -100%;
+  }
+
+  .acx-drawer[open] {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .acx-drawer::backdrop {
+    background: rgb(20 16 13 / 0.45);
+    animation: acx-fade-in 240ms var(--acx-ease);
+  }
+
+  .acx-drawer[data-closing]::backdrop {
+    animation: acx-fade-out 220ms ease-in forwards;
+  }
+
+  .acx-drawer__panel {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    inline-size: min(460px, 100%);
+    block-size: 100%;
+    background: var(--acx-paper);
+    box-shadow: var(--acx-shadow);
+    animation: acx-drawer-in 320ms var(--acx-ease);
+  }
+
+  .acx-drawer[data-closing] .acx-drawer__panel {
+    animation: acx-drawer-out 240ms ease-in forwards;
+  }
+
+  @keyframes acx-drawer-in {
+    from {
+      transform: translateX(var(--acx-slide));
+    }
+  }
+
+  @keyframes acx-drawer-out {
+    to {
+      transform: translateX(var(--acx-slide));
+    }
+  }
+
+  @keyframes acx-fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes acx-fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  .acx-drawer__header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 12px 12px 20px;
+    border-block-end: 1px solid var(--acx-line);
+  }
+
+  .acx-drawer__title {
+    margin: 0;
+    font-family: var(--acx-serif);
+    font-size: 1.5rem;
+    font-weight: 500;
+  }
+
+  .acx-drawer__title:focus {
+    outline: none;
+  }
+
+  .acx-drawer__title:focus-visible {
+    outline: 2px solid var(--acx-accent);
+  }
+
+  .acx-drawer__count {
+    color: var(--acx-muted);
+    font-family: inherit;
+    font-size: 1rem;
+  }
+
+  /* Indeterminate loading bar while a cart request is queued or in flight. */
+  .acx-drawer__loading {
+    position: absolute;
+    inset: auto 0 -1px;
+    block-size: 2px;
+    overflow: hidden;
+    background: var(--acx-accent-soft);
+  }
+
+  .acx-drawer__loading::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inline-size: 40%;
+    background: var(--acx-accent);
+    animation: acx-loading 900ms ease-in-out infinite;
+  }
+
+  .acx-drawer__loading[hidden] {
+    display: none;
+  }
+
+  @keyframes acx-loading {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(250%);
+    }
+  }
+
+  .acx-drawer__body {
+    display: grid;
+    align-content: start;
+    gap: 16px;
+    padding: 16px 20px 24px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .acx-drawer__footer {
+    display: grid;
+    gap: 10px;
+    padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
+    border-block-start: 1px solid var(--acx-line);
+    background: var(--acx-paper);
+    box-shadow: 0 -12px 28px rgb(31 26 22 / 0.06);
+  }
+
+  .acx-drawer__footer[hidden],
+  .acx-lines[hidden],
+  .acx-empty[hidden],
+  .acx-upsells[hidden],
+  .acx-offer[hidden],
+  .acx-alert[hidden],
+  .acx-gift[hidden],
+  .acx-codes[hidden] {
+    display: none;
+  }
+
+  .acx-drawer__note {
+    margin: 0;
+    color: var(--acx-muted);
+    font-size: 0.8125rem;
+  }
+
+  .acx-section-title {
+    margin: 0;
+    color: var(--acx-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  /* Offers */
+  .acx-offers {
+    display: grid;
+    gap: 10px;
+  }
+
+  .acx-offers:not(:has(.acx-offer:not([hidden]))) {
+    display: none;
+  }
+
+  .acx-offer {
+    display: grid;
+    gap: 8px;
+    padding: 12px 14px;
+    border-radius: var(--acx-radius-sm);
+    background: var(--acx-cream);
+  }
+
+  .acx-offer__text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .acx-offer__text:focus {
+    outline: none;
+  }
+
+  .acx-offer__text .acx-icon {
+    color: var(--acx-accent);
+  }
+
+  .acx-offer[data-reached],
+  .acx-offer--gift[data-state='added'] {
+    background: var(--acx-success-soft);
+  }
+
+  .acx-offer[data-reached] .acx-icon,
+  .acx-offer--gift[data-state='added'] .acx-icon,
+  .acx-offer--gift[data-state='choose'] .acx-icon {
+    color: var(--acx-success);
+  }
+
+  .acx-meter {
+    --acx-progress: 0%;
+
+    position: relative;
+    block-size: 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgb(31 26 22 / 0.1);
+  }
+
+  .acx-meter__fill {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    inline-size: var(--acx-progress);
+    border-radius: inherit;
+    background: var(--acx-accent);
+    transition: inline-size 400ms var(--acx-ease);
+  }
+
+  .acx-offer[data-reached] .acx-meter__fill,
+  .acx-offer--gift[data-state='added'] .acx-meter__fill,
+  .acx-offer--gift[data-state='choose'] .acx-meter__fill {
+    background: var(--acx-success);
+  }
+
+  .acx-gift {
+    display: grid;
+    gap: 10px;
+  }
+
+  .acx-gift__options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .acx-gift__legend {
+    margin-block-end: 6px;
+    padding: 0;
+    font-size: 0.8125rem;
+  }
+
+  .acx-pill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 38px;
+    padding: 0 14px;
+    border: 1px solid var(--acx-line-strong);
+    border-radius: 999px;
+    background: var(--acx-paper);
+    font-size: 0.8125rem;
+    cursor: pointer;
+  }
+
+  .acx-pill input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .acx-pill:has(input:checked) {
+    border-color: var(--acx-ink);
+    background: var(--acx-ink);
+    color: var(--acx-paper);
+  }
+
+  .acx-pill:has(input:focus-visible) {
+    outline: 2px solid var(--acx-accent);
+    outline-offset: 2px;
+  }
+
+  .acx-gift .acx-btn {
+    justify-self: start;
+  }
+
+  /* Error banner */
+  .acx-alert {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 6px 6px 12px;
+    border-radius: var(--acx-radius-sm);
+    background: var(--acx-danger-soft);
+    color: var(--acx-danger);
+    font-size: 0.875rem;
+  }
+
+  .acx-alert p {
+    margin: 0;
+  }
+
+  /* Line items */
+  .acx-lines {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .acx-line {
+    position: relative;
+    display: grid;
+    grid-template-columns: 80px minmax(0, 1fr);
+    gap: 14px;
+    padding-block: 16px;
+    border-block-end: 1px solid var(--acx-line);
+    transition: opacity 160ms;
+  }
+
+  .acx-line:first-child {
+    padding-block-start: 4px;
+  }
+
+  .acx-line[data-busy] {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  .acx-line__media {
+    display: block;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: var(--acx-radius-sm);
+    background: var(--acx-sand);
+  }
+
+  .acx-line__media img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .acx-line__body {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .acx-line__top {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .acx-line__info {
+    display: grid;
+    justify-items: start;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .acx-line__title {
+    color: inherit;
+    font-weight: 600;
+    line-height: 1.3;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+
+  .acx-line__title:hover {
+    text-decoration: underline;
+  }
+
+  .acx-line__variant,
+  .acx-line__props,
+  .acx-line__discounts {
+    margin: 0;
+    color: var(--acx-muted);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+  }
+
+  .acx-line__variant[hidden],
+  .acx-line__props[hidden],
+  .acx-line__discounts[hidden],
+  .acx-line__error[hidden],
+  .acx-qty[hidden] {
+    display: none;
+  }
+
+  .acx-line__prop {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .acx-line__prop dd {
+    margin: 0;
+    color: var(--acx-ink);
+    overflow-wrap: anywhere;
+  }
+
+  .acx-line__discounts {
+    padding: 0;
+    list-style: none;
+    color: var(--acx-success);
+  }
+
+  .acx-line__price {
+    display: grid;
+    justify-items: end;
+    align-content: start;
+    text-align: end;
+    white-space: nowrap;
+  }
+
+  .acx-line__unit {
+    color: var(--acx-muted);
+    font-size: 0.75rem;
+  }
+
+  .acx-line__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .acx-qty {
+    display: inline-grid;
+    grid-template-columns: 40px 44px 40px;
+    align-items: center;
+    border: 1px solid var(--acx-line-strong);
+    border-radius: 999px;
+  }
+
+  .acx-qty__button {
+    display: grid;
+    place-items: center;
+    block-size: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .acx-qty__button:hover {
+    background: var(--acx-sand);
+  }
+
+  .acx-qty__button .acx-icon {
+    inline-size: 16px;
+    block-size: 16px;
+  }
+
+  .acx-qty__input {
+    inline-size: 100%;
+    block-size: 40px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    -moz-appearance: textfield;
+  }
+
+  .acx-qty__input::-webkit-inner-spin-button,
+  .acx-qty__input::-webkit-outer-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
+  }
+
+  .acx-line__remove {
+    min-block-size: 40px;
+    padding: 0 4px;
+    border: 0;
+    background: transparent;
+    color: var(--acx-muted);
+    font: inherit;
+    font-size: 0.8125rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+
+  .acx-line__remove:hover {
+    color: var(--acx-danger);
+  }
+
+  .acx-line__error {
+    margin: 0;
+    color: var(--acx-danger);
+    font-size: 0.8125rem;
+  }
+
+  /* Upsells */
+  .acx-upsells {
+    display: grid;
+    gap: 10px;
+  }
+
+  .acx-upsells__list {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .acx-upsell {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border: 1px solid var(--acx-line);
+    border-radius: var(--acx-radius-sm);
+    animation: acx-fade-in 240ms var(--acx-ease);
+  }
+
+  .acx-upsell__image {
+    inline-size: 64px;
+    block-size: 64px;
+    border-radius: 8px;
+    background: var(--acx-sand);
+    object-fit: cover;
+  }
+
+  .acx-upsell__body {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .acx-upsell__title {
+    color: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+
+  .acx-upsell__title:hover {
+    text-decoration: underline;
+  }
+
+  .acx-upsell__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    margin: 0;
+    font-size: 0.8125rem;
+  }
+
+  .acx-upsell__price {
+    display: inline-flex;
+    gap: 6px;
+  }
+
+  .acx-upsell__availability {
+    color: var(--acx-success);
+  }
+
+  .acx-upsell__select {
+    min-block-size: 36px;
+  }
+
+  .acx-upsell__select[hidden] {
+    display: none;
+  }
+
+  .acx-upsell__actions {
+    display: grid;
+    justify-items: end;
+    gap: 2px;
+  }
+
+  .acx-upsell__dismiss {
+    display: grid;
+    place-items: center;
+    inline-size: 32px;
+    block-size: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--acx-muted);
+    cursor: pointer;
+  }
+
+  .acx-upsell__dismiss:hover {
+    background: var(--acx-sand);
+    color: var(--acx-ink);
+  }
+
+  .acx-upsell__dismiss .acx-icon {
+    inline-size: 14px;
+    block-size: 14px;
+  }
+
+  /* Empty cart */
+  .acx-empty {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    padding-block: 24px 8px;
+    text-align: center;
+  }
+
+  .acx-empty__icon {
+    display: grid;
+    place-items: center;
+    inline-size: 64px;
+    block-size: 64px;
+    border-radius: 50%;
+    background: var(--acx-cream);
+    color: var(--acx-accent);
+  }
+
+  .acx-empty__icon .acx-icon {
+    inline-size: 28px;
+    block-size: 28px;
+  }
+
+  .acx-empty__heading {
+    margin: 4px 0 0;
+    font-family: var(--acx-serif);
+    font-size: 1.375rem;
+    font-weight: 500;
+  }
+
+  .acx-empty__heading:focus {
+    outline: none;
+  }
+
+  .acx-empty__text {
+    max-width: 32ch;
+    margin: 0;
+    color: var(--acx-muted);
+  }
+
+  .acx-empty__actions {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    margin-block-start: 6px;
+  }
+
+  .acx-empty__featured {
+    display: grid;
+    gap: 10px;
+    inline-size: 100%;
+    margin-block-start: 18px;
+    text-align: start;
+  }
+
+  .acx-empty__list {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Discount codes */
+  .acx-discount__summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-block-size: 40px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .acx-discount__summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .acx-discount__summary::after {
+    content: '+';
+    margin-inline-start: auto;
+    font-size: 1.125rem;
+    font-weight: 400;
+  }
+
+  .acx-discount[open] .acx-discount__summary::after {
+    content: '−';
+  }
+
+  .acx-discount__form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding-block: 2px 4px;
+  }
+
+  .acx-input {
+    min-inline-size: 0;
+    min-block-size: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--acx-line-strong);
+    border-radius: var(--acx-radius-sm);
+    background: var(--acx-paper);
+    color: var(--acx-ink);
+    font: inherit;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+  }
+
+  .acx-input::placeholder {
+    text-transform: none;
+  }
+
+  .acx-input[aria-invalid='true'] {
+    border-color: var(--acx-danger);
+  }
+
+  .acx-discount__status {
+    margin: 4px 0 0;
+    font-size: 0.8125rem;
+  }
+
+  .acx-discount__status[hidden] {
+    display: none;
+  }
+
+  .acx-discount__status[data-tone='success'] {
+    color: var(--acx-success);
+  }
+
+  .acx-discount__status[data-tone='error'] {
+    color: var(--acx-danger);
+  }
+
+  .acx-codes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .acx-code {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding-inline: 10px 2px;
+    border-radius: 999px;
+    background: var(--acx-success-soft);
+    color: var(--acx-success);
+    font-size: 0.8125rem;
+    font-weight: 700;
+  }
+
+  .acx-code .acx-icon {
+    inline-size: 14px;
+    block-size: 14px;
+  }
+
+  .acx-code__remove {
+    display: grid;
+    place-items: center;
+    inline-size: 32px;
+    block-size: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .acx-code__remove:hover {
+    background: rgb(45 106 75 / 0.14);
+  }
+
+  /* Totals */
+  .acx-totals {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+  }
+
+  .acx-totals__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 0.875rem;
+  }
+
+  .acx-totals__row dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .acx-totals__row--savings {
+    color: var(--acx-success);
+  }
+
+  .acx-totals__row--savings[hidden] {
+    display: none;
+  }
+
+  .acx-summary {
+    display: grid;
+    gap: 10px;
+    padding-block-start: 4px;
+    border-block-start: 1px solid var(--acx-line);
+  }
+
+  .acx-totals--summary:not(:has(.acx-totals__row:not([hidden]))) {
+    display: none;
+  }
+
+  .acx-totals__row--total {
+    font-size: 1.0625rem;
+    font-weight: 700;
+  }
+
+  .acx-checkout {
+    margin: 0;
+  }
+
+  .acx-drawer__continue {
+    min-block-size: 36px;
+    font-size: 0.875rem;
+  }
+
+  .acx-drawer__footer {
+    gap: 8px;
+  }
+
+  .acx-checkout .acx-btn {
+    min-block-size: 52px;
+    font-size: 1rem;
+  }
+
+  /* Phones: full-width, full-height drawer. */
+  @media screen and (max-width: 599px) {
+    .acx-drawer__panel {
+      inline-size: 100%;
+    }
+
+    .acx-drawer__body {
+      padding-inline: 16px;
+    }
+
+    .acx-drawer__footer {
+      padding-inline: 16px;
+    }
+
+    .acx-line {
+      grid-template-columns: 68px minmax(0, 1fr);
+      gap: 12px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .acx-drawer__panel,
+    .acx-drawer::backdrop,
+    .acx-upsell {
+      animation: none;
+    }
+
+    .acx-drawer[data-closing] .acx-drawer__panel,
+    .acx-drawer[data-closing]::backdrop {
+      animation: none;
+    }
+
+    .acx-meter__fill,
+    .acx-line {
+      transition: none;
+    }
+
+    .acx-drawer__loading::after {
+      animation-duration: 2.4s;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:acx.drawer_name",
+  "tag": "section",
+  "class": "acx-shopify-section acx-shopify-section--drawer",
+  "settings": [
+    { "type": "checkbox", "id": "intercept_header", "label": "t:acx.intercept_header", "info": "t:acx.intercept_header_info", "default": true },
+    { "type": "header", "content": "t:acx.shipping_header" },
+    { "type": "checkbox", "id": "free_shipping_enabled", "label": "t:acx.free_shipping_enabled", "default": true },
+    { "type": "number", "id": "free_shipping_threshold", "label": "t:acx.free_shipping_threshold", "info": "t:acx.threshold_info", "default": 100 },
+    { "type": "checkbox", "id": "free_shipping_confirmed", "label": "t:acx.free_shipping_confirmed", "info": "t:acx.free_shipping_confirmed_info", "default": false },
+    { "type": "header", "content": "t:acx.gift_header" },
+    { "type": "checkbox", "id": "gift_enabled", "label": "t:acx.gift_enabled", "default": false },
+    { "type": "number", "id": "gift_threshold", "label": "t:acx.gift_threshold", "info": "t:acx.threshold_info", "default": 150 },
+    { "type": "product", "id": "gift_product", "label": "t:acx.gift_product", "info": "t:acx.gift_product_info" },
+    { "type": "header", "content": "t:acx.upsells_header" },
+    { "type": "text", "id": "upsell_heading", "label": "t:acx.heading", "default": "Pairs well with" },
+    { "type": "checkbox", "id": "use_recommendations", "label": "t:acx.use_recommendations", "info": "t:acx.use_recommendations_info", "default": true },
+    { "type": "text", "id": "recommendation_tag", "label": "t:acx.recommendation_tag", "info": "t:acx.recommendation_tag_info", "visible_if": "{{ section.settings.use_recommendations }}" },
+    { "type": "range", "id": "upsell_limit", "label": "t:acx.upsell_limit", "min": 1, "max": 4, "step": 1, "default": 3 },
+    { "type": "product_list", "id": "upsell_products", "label": "t:acx.upsell_products", "info": "t:acx.upsell_products_info", "limit": 8 },
+    { "type": "header", "content": "t:acx.discount_header" },
+    { "type": "checkbox", "id": "show_discount", "label": "t:acx.show_discount", "default": true },
+    { "type": "header", "content": "t:acx.empty_header" },
+    { "type": "text", "id": "empty_heading", "label": "t:acx.heading", "default": "Your cart is empty" },
+    { "type": "text", "id": "empty_text", "label": "t:acx.text" },
+    { "type": "url", "id": "continue_url", "label": "t:acx.continue_url" },
+    { "type": "text", "id": "empty_featured_heading", "label": "t:acx.empty_featured_heading", "default": "Popular right now" },
+    { "type": "collection", "id": "empty_collection", "label": "t:acx.empty_collection" },
+    { "type": "product_list", "id": "empty_products", "label": "t:acx.empty_products", "info": "t:acx.empty_products_info", "limit": 4 }
+  ],
+  "blocks": [
+    {
+      "type": "upsell_rule",
+      "name": "t:acx.rule_name",
+      "settings": [
+        { "type": "product", "id": "trigger", "label": "t:acx.rule_trigger" },
+        { "type": "product_list", "id": "products", "label": "t:acx.rule_products", "limit": 4 }
+      ]
+    }
+  ],
+  "presets": [{ "name": "t:acx.drawer_name", "category": "t:categories.products" }]
+}
+{% endschema %}

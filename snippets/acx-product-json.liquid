@@ -1,0 +1,38 @@
+{% doc %}
+  Renders one product as JSON for the Advanced Cart demo scripts: the fields
+  the product card, frequently-bought-together and upsell list need. Prices
+  are in the cart's currency minor units, as in the AJAX Cart API.
+
+  @param {object} product - Product to serialize
+
+  @example
+  <script type="application/json">{% render 'acx-product-json', product: product %}</script>
+{% enddoc %}
+{%- liquid
+  assign image = product.featured_image
+  assign image_url = ''
+  if image != blank
+    assign image_url = image | image_url: width: 320
+  endif
+-%}
+{
+  "id": {{ product.id }},
+  "title": {{ product.title | json }},
+  "url": {{ product.url | json }},
+  "image": {{ image_url | json }},
+  "imageAlt": {{ image.alt | default: product.title | json }},
+  "available": {{ product.available | json }},
+  "hasOnlyDefaultVariant": {{ product.has_only_default_variant | json }},
+  "variants": [
+    {%- for variant in product.variants -%}
+      {
+        "id": {{ variant.id }},
+        "title": {{ variant.title | json }},
+        "price": {{ variant.price }},
+        "compareAtPrice": {% if variant.compare_at_price > variant.price %}{{ variant.compare_at_price }}{% else %}null{% endif %},
+        "available": {{ variant.available | json }}
+      }
+      {%- unless forloop.last -%},{%- endunless -%}
+    {%- endfor -%}
+  ]
+}
